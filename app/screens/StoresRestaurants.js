@@ -13,13 +13,15 @@ import {
     FlatList,
 } from 'react-native'
 import React, { useState, useEffect } from 'react'
-import { ActivityIndicator, AnimatedFAB, Button, Card, Dialog, Divider, Menu, Modal, Portal, SegmentedButtons, Snackbar, Text } from 'react-native-paper';
+import { ActivityIndicator, AnimatedFAB, Button, Card, Dialog, Divider, Menu, Modal, Portal, Searchbar, SegmentedButtons, Snackbar, Surface, Text } from 'react-native-paper';
 import myTheme from '../utils/theme';
 import { useLogin } from '../utils/LoginProvider';
 import StoreCard from '../Components/StoreCard';
 import {
     MaterialIcons,
-    AntDesign
+    AntDesign,
+    MaterialCommunityIcons,
+    Feather
 } from "@expo/vector-icons";
 import Header from '../Components/Header';
 import AddressComponent from '../Components/AddressComponent';
@@ -33,10 +35,12 @@ import { ref, set, onValue, remove, update, push } from 'firebase/database'
 import { ref as imgRef, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage'
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth, db, storage } from '../config'
+import MapView, {Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import * as Location from 'expo-location';
 
 const StoresRestaurants = ({ navigation, animateFrom, }) => {
     const { COLORS, screenHeight, screenWidth, STYLES } = myTheme();
-    const { isLoggedIn, setIsLoggedIn, profile, setProfile } = useLogin();
+    const { isLoggedIn, setIsLoggedIn, profile, setProfile, location } = useLogin();
     const [visible, setVisible] = useState(false);
     const [deleteVisible, setDeleteVisible] = useState(false);
     const [isExtended, setIsExtended] = useState(true);
@@ -49,6 +53,8 @@ const StoresRestaurants = ({ navigation, animateFrom, }) => {
     const [errorVisible, setErrorVisible] = useState(false);
     const [successVisible, setSuccessVisible] = useState(false);
     const [msg, setMSG] = useState("");
+    const [pickUpLoc, setPickupLoc] = useState('');
+    const [pickUpCords, setPickUpCords] = useState({});
     const [sMsg, setSMsg] = useState("");
     const [missingInputs, setMissingInputs] = useState(false);
     const [image, setImage] = useState("");
@@ -56,8 +62,24 @@ const StoresRestaurants = ({ navigation, animateFrom, }) => {
     const [imageUrl, setImageUrl] = useState("");
     const [deleteKey, setDeleteKey] = useState('')
     const [deleteImageName, setDeleteImageName] = useState('')
-  
+    const [viewCamera, setViewCamera] = useState(false);
     const [shops, setShops] = useState({});
+    const [search, setSearch] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchNone, setSearchNone] = useState(false);
+    const [tempSearch, setTempSearch] = useState([]);
+    const [viewMap, setViewMap] = useState(false);
+    const [shopNumber, setShopNumber] = useState('');
+    const [mapType, setMapType] = useState('standard');
+    const [layers, setLayers] = useState("none");
+    const [mapRegion, setMapRegion] = useState({           
+          latitude: location.latitude, 
+          longitude: location.longitude,
+          latitudeDelta: 0.0140,
+          longitudeDelta: 0.0080
+      })
+    const [showLoc, setShowLoc] = useState('none');
+    const [myLocation, setMyLocation] = useState('');
 
     const isIOS = Platform.OS === 'ios';
 
@@ -72,7 +94,11 @@ const StoresRestaurants = ({ navigation, animateFrom, }) => {
                         ...data[key]
                     }));
 
+                // All shops
                 setShops(newShops);
+
+                // All unfiltered orders
+                setTempSearch(newShops);
             }
         });
     }, [])
@@ -119,10 +145,18 @@ const StoresRestaurants = ({ navigation, animateFrom, }) => {
     };
 
     const handleClick = async () => {
+        if (shopName !== '' && shopAddress !== '') {
+        setIsLoading(true);
         if (image) {
             await uploadImage(image, "image");
         } else {
             handleAddShop(image);
+        }
+        } else {
+            setIsLoading(false)
+            setMissingInputs(true);
+            setMSG("Error: Some required inputs are missing, please fill all the red boxes with required.");
+            setErrorVisible(true);
         }
     };
 
@@ -156,14 +190,14 @@ const StoresRestaurants = ({ navigation, animateFrom, }) => {
     }
 
     const handleAddShop = (profilePic) => {
-        if (shopName !== '' && shopAddress !== '') {
-            setIsLoading(true);
             push(ref(db, 'Shops/'), {
                 shopName: shopName,
                 shopCategory: shopCategory,
                 shopAddress: shopAddress,
                 shopPicture: profilePic,
-                shopPicName: imageName
+                shopPicName: imageName,
+                shopCords: pickUpCords,
+                buildingNumber: shopNumber
 
             }).then(() => {
                 setIsLoading(false)
@@ -176,6 +210,7 @@ const StoresRestaurants = ({ navigation, animateFrom, }) => {
                 setShopCategory('');
                 setShopName('');
                 setImage('');
+                setShopNumber('');
                 setAddStore(!addStore)
 
             }).catch((error) => {
@@ -185,12 +220,6 @@ const StoresRestaurants = ({ navigation, animateFrom, }) => {
                 setMSG(errorMsg);
                 setErrorVisible(true)
             })
-        } else {
-            setIsLoading(false)
-            setMissingInputs(true);
-            setMSG("Error: Some required inputs are missing, please fill all the red boxes with required.");
-            setErrorVisible(true);
-        }
     }
       
   const confirmDelete = (index, deleteImageName) => {
@@ -222,7 +251,6 @@ const StoresRestaurants = ({ navigation, animateFrom, }) => {
         setDeleteVisible(!deleteVisible)
       })
    }else{
-    alert(index)
     remove(ref(db,"Shops/" + index))
     .then(()=>{
       setIsLoading(false)
@@ -243,9 +271,180 @@ const StoresRestaurants = ({ navigation, animateFrom, }) => {
 
   }
 
+  const CustomHeader = () => (
+    <View style={{flexDirection: 'row', justifyContent: 'space-around', flex: 1}}>
+        {profile.accountType === "Admin" || profile.accountType === "Biker" ? (
+           <TouchableOpacity style={{borderWidth: 1, borderColor: COLORS.outline, borderRadius: 100, width: 25, height: 25, marginHorizontal: 5, alignItems: 'center', justifyContent: 'center'}} onPress={() => {
+            setAddStore(true)
+          }}>
+            <MaterialCommunityIcons color={COLORS.outline} name='plus' size={15}/>
+          </TouchableOpacity>
+       ): (
+         <></>
+       )}
+     
+       <TouchableOpacity style={{borderWidth: 1, borderColor: COLORS.outline, borderRadius: 100, width: 25, height: 25, marginHorizontal: 5, alignItems: 'center', justifyContent: 'center'}}>
+         <MaterialCommunityIcons color={COLORS.outline} name='reload' size={15}/>
+       </TouchableOpacity>
+       <TouchableOpacity style={{borderWidth: 1, borderColor: COLORS.outline, borderRadius: 100, width: 25, height: 25, marginHorizontal: 5, alignItems: 'center', justifyContent: 'center'}} onPress={() => {
+         setSearch(!search)
+       }}>
+         <MaterialIcons color={COLORS.outline} name='search' size={15}/>
+       </TouchableOpacity>
+    </View>
+   )
+   
+  const searchQ = (sQuery) => {
+        if(sQuery !== ''){
+          let temp = shops.filter((item) => String(item.shopAddress).includes(sQuery) || String(item.shopName).includes(sQuery) || String(item.shopCategory).includes(sQuery) || String(item.shop).includes(sQuery))
+          setShops(temp);
+          if(temp.length === 0){
+            setSearchNone(true);
+          } else{
+            setSearchNone(false);
+          }
+        } else {
+          setSearchNone(false);
+          setShops(tempSearch);
+        }
+  }
+
+  const fetchLocationAddress = async (reg) => {
+      if (!reg) {
+          return; // Do nothing if location is not available
+      }
+      
+      try {
+          const {latitude, longitude} = await reg;
+          const response = await Location.reverseGeocodeAsync({ latitude, longitude });
+          const address = response[0]; // Assuming the first address is relevant
+          
+          //updating the location state
+          setMyLocation(address);
+          setShowLoc('flex')
+      } catch (error) {
+        console.error('Error fetching location address:', error);
+      }
+    };
+
+  onRegionChange = region => {
+    setMapRegion(region)
+    fetchLocationAddress(region);
+  };
+
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, {backgroundColor: COLORS.surface}]}>
+            <Header 
+                title='Shops' 
+                titleColor={COLORS.outline}
+                rightView={search ? null : <CustomHeader/>}
+            />
+
+            {search ? (
+            <View style={{width: screenWidth}}>
+                <Searchbar
+                    mode='bar'
+                    placeholder="Search by shop name, shop address, category"
+                    value={searchQuery}
+                    onChangeText={(searchQuery) => {
+                        setSearchQuery(searchQuery);
+                        searchQ(searchQuery);
+                    }}
+                    right={() => (<MaterialCommunityIcons name='close' size={20} style={{paddingRight: 10}} color={COLORS.outline} onPress={() => {
+                        setSearchQuery('')
+                        setSearch(false);
+                        setShops(tempSearch);
+                        setSearchNone(false);
+                    }}/>)}
+                    onClearIconPress={() => setSearch(false)}
+                    style={{borderRadius: 0}}
+                    inputStyle={{color: COLORS.outline}}
+                    />
+            </View>
+            ):(
+            <></>
+            )}
+
+            {searchNone && (
+                <>
+                <Text style={[STYLES.textNormal, {fontSize: 18, paddingVertical: 10}]}>No search results found :(</Text>
+                </>
+            )}
+
             <Portal>
+                {/* Map view modal */}
+                <Modal visible={viewMap} onDismiss={() => setViewMap(!viewMap)} contentContainerStyle={[STYLES.modalContainer, {justifyContent: 'flex-start',}]}>
+                    <View style={{backgroundColor: '#fff', overflow: 'hidden', paddingVertical: 10, width: '100%', height: screenHeight - 200}}>
+                        <View style={{alignItems: "flex-start"}}>
+                            <Text style={[STYLES.textNormal, {textAlign: 'left', alignSelf: 'flex-start', paddingBottom: 10}]}>Move your map to the center of the marker, then press <Text style={[STYLES.textNormal, { fontFamily: "DMSansItalic", textAlign: 'left', alignSelf: 'flex-start', paddingBottom: 10}]}>"Choose location"</Text>.</Text>
+                        </View>
+                        <MapView
+                            style={styles.map}
+                            provider={Platform.OS == "android" ? PROVIDER_GOOGLE : undefined}
+                            showsBuildings
+                            showsCompass
+                            showsMyLocationButt
+                            showsUserLocation={true}
+                            initialRegion={mapRegion}
+                            followsUserLocation
+                            mapType= {mapType}
+                            onRegionChangeComplete={this.onRegionChange}
+                        />
+
+                        <View style={styles.markerFixed}>
+                            <Image style={styles.marker} source={require("../assets/marker.png")} />
+                        </View>
+                        
+                        <View style={{position: 'absolute', top: 70, right: 20}}>
+                            <TouchableOpacity style={{backgroundColor: COLORS.background, padding: 5, alignItems: 'center', borderRadius: 5, marginBottom: 10}} onPress={() => {
+                                if(layers === "none"){
+                                    setLayers("flex")
+                                }else{
+                                    setLayers("none")
+                                }
+                            }}>
+                                <Feather name="layers" size={25} color={COLORS.button} />
+                                <Text style={{fontSize: 10}}>Layers</Text>
+                            </TouchableOpacity>
+                            <View style={{display: layers}}>
+                                <TouchableOpacity style={{borderColor: COLORS.outline, borderWidth: 2,alignItems: 'center', marginBottom: 10}} onPress={() => {
+                                    setMapType("hybrid")
+                                    setLayers("none")
+                                }}>
+                                    <Image style={{width: 50, height: 40}} source={require("../assets/satellite.png")} />
+                                </TouchableOpacity>
+                                <TouchableOpacity style={{borderColor: COLORS.outline, borderWidth: 2,alignItems: 'center', marginBottom: 10}} onPress={() => {
+                                    setMapType("standard")
+                                    setLayers("none")
+                                }}>
+                                    <Image style={{width: 50, height: 40}} source={require("../assets/standard.png")} />
+                                </TouchableOpacity>
+
+                            </View>
+                        </View>
+
+                        <View style={{position: 'absolute', bottom: 0, flexDirection: "row", justifyContent: 'space-between', alignItems: 'center', width: '100%', paddingHorizontal: 10, paddingVertical: 5, backgroundColor: COLORS.background}}>
+                            <TouchableOpacity onPress={() => {
+                                setViewMap(!viewMap);
+                            }}>
+                                <Button compact mode='contained' contentStyle={{width: 'auto'}} style={{borderRadius: 30, width: 'auto', paddingHorizontal: 1, backgroundColor: COLORS.error}}>Cancel</Button>
+                            </TouchableOpacity>
+                            <View style={{paddingHorizontal: 10, flex: 3, display: showLoc}}>
+                                <Text style={[STYLES.textHeading, {textAlign: 'center', alignSelf: 'center', fontSize: 15}]}>Selected location</Text>
+                                <Text style={[STYLES.textNormal, {textAlign: 'center', alignSelf: 'center'}]}>{myLocation.street +", "+myLocation.city +", "+myLocation.country}</Text>
+                            </View>
+                            <TouchableOpacity style={{ display: showLoc}} onPress={() => {
+                                setShopAddress(myLocation.street +", "+myLocation.city +", "+myLocation.country);
+                                setPickUpCords(mapRegion);
+                                setViewMap(!viewMap);
+                                setAddStore(!addStore)
+                            }}>
+                                <Button compact mode='contained' contentStyle={{width: 'auto'}} style={{borderRadius: 30, width: 'auto', paddingHorizontal: 1}}>Next</Button>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </Modal>
+                
                 {/* Edit store modal */}
                 <Modal visible={visible} onDismiss={() => setVisible(!visible)} contentContainerStyle={[STYLES.modalContainer, { height: screenHeight - 300 }]}>
                     <View style={STYLES.modalInner}>
@@ -269,8 +468,15 @@ const StoresRestaurants = ({ navigation, animateFrom, }) => {
                 </Modal>
 
                 {/* Add store modal */}
-                <Modal visible={addStore} onDismiss={() => setAddStore(!addStore)} contentContainerStyle={[STYLES.modalContainer, { height: screenHeight - 300 }]}>
-                    <View style={STYLES.modalInner}>
+                <Modal visible={addStore} onDismiss={() => setAddStore(!addStore)} contentContainerStyle={{
+                        height: screenHeight - 300,
+                        padding: 10,
+                        backgroundColor: COLORS.surface,
+                        marginHorizontal: 10, 
+                        marginVertical: 20,
+                        borderRadius: 15,
+
+                    }}>
                         <Text style={STYLES.textHeading}>Add your shop/restaurant</Text>
                         <ScrollView>
                             <View>
@@ -281,7 +487,6 @@ const StoresRestaurants = ({ navigation, animateFrom, }) => {
                                     onPress={pickImage}
                                     style={{
                                         padding: 5,
-                                        backgroundColor: "#fff",
                                         width: screenWidth - 80,
                                         marginBottom: 15,
                                         flexDirection: "row",
@@ -333,28 +538,53 @@ const StoresRestaurants = ({ navigation, animateFrom, }) => {
                                 onChangeFunction={(shopCategory) => setShopCategory(shopCategory)}
                             />
                             <MyTextArea
+                                onPress={() => {
+                                    setViewMap(!viewMap);
+                                    setAddStore(!addStore)
+                                }}
                                 label='Address/Location'
                                 type='add'
                                 placeholder='Address of the store/restaurant'
                                 value={shopAddress}
                                 onChangeFunction={(shopAddress) => setShopAddress(shopAddress)}
                             />
-                            {isLoading ? (
-                                <Button mode="contained" style={{ borderRadius: 0, width: screenWidth - 50, paddingVertical: 5, marginVertical: 5, backgroundColor: COLORS.background }}>
-                                    <ActivityIndicator animating={true} color={COLORS.button} />
-                                </Button>
-                            ) : (
-                                <>
-                                    <CustomButton text='Add Shop' onPress={() => {
-                                        // alert('Successfully')
-                                        handleClick()
-                                    }} />
-
-                                </>
-                            )}
+                             <MyInput
+                                label='Shop/Building Number'
+                                type='add'
+                                placeholder='Shop or building number'
+                                value={shopNumber}
+                                onChangeFunction={(shopNumber) => setShopNumber(shopNumber)}
+                            />
 
                         </ScrollView>
-                    </View>
+                        <View style={{paddingVertical:10, paddingHorizontal: 20, flexDirection: 'row', justifyContent: 'space-between'}}>
+                        <TouchableOpacity style={{borderWidth: 1, borderColor: COLORS.outline, paddingHorizontal: 15, paddingVertical: 5, borderRadius: 20,  flexDirection: 'row', alignItems: 'center'}} onPress={() => {
+                            setAddStore(!addStore)
+                            setShopAddress('');
+                            setShopCategory('');
+                            setShopName('');
+                            setImage('');
+                            setShopNumber('');
+                        }}>
+                            <AntDesign color={COLORS.outline} name='left' size={18}/>
+                            <Text style={[STYLES.textNormal, {paddingHorizontal: 5}]}>Cancel</Text>
+                        </TouchableOpacity>
+                            {isLoading ? (
+                                <TouchableOpacity style={{borderWidth: 1, borderColor: COLORS.outline, paddingHorizontal: 15, paddingVertical: 5, borderRadius: 15, }} onPress={() => {
+                                }}>
+                                    <View style={{alignItems: "center"}}>
+                                        <ActivityIndicator animating={true} color={COLORS.button} />
+                                    </View>
+                                </TouchableOpacity>
+                            ):(
+                                <TouchableOpacity style={{borderWidth: 1, borderColor: COLORS.outline, paddingHorizontal: 15, paddingVertical: 5, borderRadius: 15, flexDirection: 'row', alignItems: 'center'}} onPress={() => {
+                                    handleClick();
+                                }}>
+                                <Text style={[STYLES.textNormal, {paddingHorizontal: 5}]}>Save</Text>
+                                <MaterialIcons color={COLORS.outline} name='save' size={20}/>
+                            </TouchableOpacity>
+                            )}
+                        </View>
                 </Modal>
 
                 <Dialog visible={deleteVisible} onDismiss={() => setDeleteVisible(!deleteVisible)}>
@@ -375,8 +605,6 @@ const StoresRestaurants = ({ navigation, animateFrom, }) => {
                 </Dialog>
             </Portal>
 
-            <Header title='Shops' backPress={() => navigation.goBack()} menuPress={() => navigation.toggleDrawer()} />
-
             <ScrollView horizontal={true} onScroll={onScroll} showsHorizontalScrollIndicator={false} showsVerticalScrollIndicator={true} style={{ flex: 1, height: screenHeight - 580,  borderBottomLeftRadius: 20, borderBottomRightRadius: 20}}>
                 <FlatList
                     data={shops}
@@ -393,24 +621,7 @@ const StoresRestaurants = ({ navigation, animateFrom, }) => {
                     />
                     )}
                 />
-
             </ScrollView>
-
-            {profile.accountType === "Admin" ? (
-                <AnimatedFAB
-                    icon={'plus'}
-                    label={'Add New Shop'}
-                    extended={isExtended}
-                    onPress={() => setAddStore(!addStore)}
-                    visible={fabVisible}
-                    animateFrom='right'
-                    iconMode={'static'}
-                    style={[styles.fabStyle, fabStyle, { backgroundColor: COLORS.button }]}
-                    color={COLORS.background}
-                />
-            ):(
-                <></>
-            )}
             <Portal>
                 <Snackbar
                     style={{ backgroundColor: COLORS.error }}
@@ -448,4 +659,19 @@ const styles = StyleSheet.create({
         right: 16,
         position: 'absolute',
     },
+    map: {
+        flex: 1,
+        borderRadius: 15
+    },
+    markerFixed: {
+        left: '50%',
+        marginLeft: -24,
+        marginTop: -48,
+        position: 'absolute',
+        top: '50%'
+      },
+      marker: {
+        height: 48,
+        width: 48
+      },
 })

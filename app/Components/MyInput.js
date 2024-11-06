@@ -30,7 +30,7 @@ const MyInput = ({label, right, type, placeholder, errorText, isRequired, value,
           value={value}
           onChangeText={onChangeFunction}
         />
-        <HelperText type="error" padding="none" visible={!value}>
+        <HelperText type="error" padding="normal" visible={!value}>
           {errorText}
         </HelperText>
         </>
@@ -50,7 +50,7 @@ const MyInput = ({label, right, type, placeholder, errorText, isRequired, value,
         onChangeText={onChangeFunction}
 
       />
-        <HelperText type="error" padding="none" visible={!value}>
+        <HelperText type="error" padding="normal" visible={!value}>
         {errorText}
       </HelperText>
       </>
@@ -69,7 +69,7 @@ const MyInput = ({label, right, type, placeholder, errorText, isRequired, value,
         onChangeText={onChangeFunction}
 
       />
-        <HelperText type="error" padding="none" visible={!value}>
+        <HelperText type="error" padding="normal" visible={!value}>
         {errorText}
       </HelperText>
       </>
@@ -88,7 +88,7 @@ const MyInput = ({label, right, type, placeholder, errorText, isRequired, value,
         onChangeText={onChangeFunction}
 
       />
-        <HelperText type="error" padding="none" visible={!value}>
+        <HelperText type="error" padding="normal" visible={!value}>
         {errorText}
       </HelperText>
       </>
@@ -106,7 +106,7 @@ const MyInput = ({label, right, type, placeholder, errorText, isRequired, value,
         onChangeText={onChangeFunction}
 
       />
-        <HelperText type="error" padding="none" visible={!value}>
+        <HelperText type="error" padding="normal" visible={!value}>
         {errorText}
       </HelperText>
       </>
@@ -123,7 +123,7 @@ const MyInput = ({label, right, type, placeholder, errorText, isRequired, value,
         value={value}
         onChangeText={onChangeFunction}
       />
-        <HelperText type="error" padding="none" visible={!value}>
+        <HelperText type="error" padding="normal" visible={!value}>
         {errorText}
       </HelperText>
       </>

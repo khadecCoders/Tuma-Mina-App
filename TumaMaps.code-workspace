@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../TumaMina Payment"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "TumaMina Payment"
+	}
+}

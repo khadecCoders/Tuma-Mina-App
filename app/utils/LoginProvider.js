@@ -12,6 +12,7 @@ const LoginProvider = ({ children }) => {
     const [isInternetReachable, setIsInternetReachable] = useState(false);
     const [ viewedOnBoarding, setViewedOnBoarding ] = useState(false);
     const [location, setLocation] = useState({});
+    const [themeDark, setThemeDark] = useState(false);
 
   return (
     <LoginContext.Provider value={{
@@ -23,8 +24,8 @@ const LoginProvider = ({ children }) => {
       location, setLocation,
       loadingSignIn, setLoadingSignIn,
       isInternetReachable, setIsInternetReachable,
-      viewedOnBoarding, setViewedOnBoarding
-
+      viewedOnBoarding, setViewedOnBoarding,
+      themeDark, setThemeDark,
       }}>
     {children}
     </LoginContext.Provider>

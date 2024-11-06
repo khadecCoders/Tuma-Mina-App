@@ -8,7 +8,7 @@ import {
     FlatList,
 } from 'react-native'
 import React, { useState, useEffect } from 'react'
-import { ActivityIndicator, AnimatedFAB, Button, Dialog, Divider, Modal, Portal, Snackbar, Text } from 'react-native-paper';
+import { ActivityIndicator, AnimatedFAB, Button, Dialog, Divider, Modal, Portal, Searchbar, Snackbar, Text } from 'react-native-paper';
 import myTheme from '../utils/theme';
 import { useLogin } from '../utils/LoginProvider';
 import Header from '../Components/Header';
@@ -24,7 +24,7 @@ import { ref as imgRef, uploadBytesResumable, getDownloadURL, deleteObject } fro
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth, db, storage } from '../config'
 import DropdownComponent from '../Components/DropdownComponent';
-import { MaterialIcons } from '@expo/vector-icons'
+import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons'
 
 const Bikers = ({ navigation, animateFrom, }) => {
     const { COLORS, screenHeight, screenWidth, STYLES } = myTheme();
@@ -59,6 +59,10 @@ const Bikers = ({ navigation, animateFrom, }) => {
     const [bikerId, setBikerId] = useState('');
     const [deleteKey, setDeleteKey] = useState('')
     const [deleteImageName, setDeleteImageName] = useState('')
+    const [search, setSearch] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchNone, setSearchNone] = useState(false);
+    const [tempSearch, setTempSearch] = useState([]);
 
     const isIOS = Platform.OS === 'ios';
 
@@ -75,6 +79,7 @@ const Bikers = ({ navigation, animateFrom, }) => {
                 
                 const bikerAccounts = newBikers.filter((item) => item.accountType === "Biker"); 
                 setBikers(bikerAccounts);
+                setTempSearch(bikerAccounts);
             }
         });
     }, [])
@@ -235,71 +240,71 @@ const Bikers = ({ navigation, animateFrom, }) => {
         }
     }
           
-  const confirmDelete = (index, deleteImageName) => {
-    // .......
-    const desertRef = imgRef(storage, `Images/${deleteImageName}`);
-    setIsLoading(true)
-   if(deleteImageName !== ""){
-    deleteObject(desertRef).then(() => {
+    const confirmDelete = (index, deleteImageName) => {
+        // .......
+        const desertRef = imgRef(storage, `Images/${deleteImageName}`);
+        setIsLoading(true)
+    if(deleteImageName !== ""){
+        deleteObject(desertRef).then(() => {
+            remove(ref(db,"users/" + index))
+            .then(()=>{
+            setSMsg("Biker deleted successfully deleted")
+            setSuccessVisible(true)
+            setDeleteVisible(!deleteVisible)
+            setDeleteVisible(!deleteVisible)
+        
+            }).catch((error)=>{
+                setDeleteVisible(!deleteVisible)
+                let errorMessage = err.message.replace(/[()]/g," ");
+                let errorMsg = errorMessage.replace('Firebase:',"");
+                setMSG("unsuccessful, Error: "+errorMsg);
+                setErrorVisible(true)
+            });
+        }).catch((error) => {
+            let errorMessage = error.message.replace(/[()]/g," ");
+            let errorMsg = errorMessage.replace('Firebase:',"");
+            setIsLoading(false)
+            setMSG("unsuccessful, Error: "+errorMsg);
+            setErrorVisible(true)
+            setDeleteVisible(!deleteVisible)
+        })
+    }else{
         remove(ref(db,"users/" + index))
         .then(()=>{
-          setSMsg("Biker deleted successfully deleted")
-          setSuccessVisible(true)
-          setDeleteVisible(!deleteVisible)
-          setDeleteVisible(!deleteVisible)
-    
+        setIsLoading(false)
+        setSMsg("Address deleted successfully deleted")
+        setSuccessVisible(true)
+        setDeleteVisible(!deleteVisible)
+        setDeleteVisible(!deleteVisible)
+
         }).catch((error)=>{
+            setIsLoading(false)
             setDeleteVisible(!deleteVisible)
             let errorMessage = err.message.replace(/[()]/g," ");
             let errorMsg = errorMessage.replace('Firebase:',"");
             setMSG("unsuccessful, Error: "+errorMsg);
             setErrorVisible(true)
         });
-      }).catch((error) => {
-        let errorMessage = error.message.replace(/[()]/g," ");
-        let errorMsg = errorMessage.replace('Firebase:',"");
-        setIsLoading(false)
-        setMSG("unsuccessful, Error: "+errorMsg);
-        setErrorVisible(true)
-        setDeleteVisible(!deleteVisible)
-      })
-   }else{
-    remove(ref(db,"users/" + index))
-    .then(()=>{
-      setIsLoading(false)
-      setSMsg("Address deleted successfully deleted")
-      setSuccessVisible(true)
-      setDeleteVisible(!deleteVisible)
-      setDeleteVisible(!deleteVisible)
+    }
 
-    }).catch((error)=>{
-        setIsLoading(false)
-        setDeleteVisible(!deleteVisible)
-        let errorMessage = err.message.replace(/[()]/g," ");
-        let errorMsg = errorMessage.replace('Firebase:',"");
-        setMSG("unsuccessful, Error: "+errorMsg);
-        setErrorVisible(true)
-    });
-   }
-
-  }
+    }
 
     const handleProfileEdit = () => {
         // Upload details
         setIsLoading(true)
         update(ref(db, 'users/' + bikerId), {
-          username: userName,
-          usernumber: userNumber,
-          userAddress: userAddress,
-          accountType: accType,
-          bikeNo: bikeNo,
+            username: userName,
+            usernumber: userNumber,
+            userAddress: userAddress,
+            accountType: accType,
+            bikeNo: bikeNo,
 
         }).then(() => {
-          setIsLoading(false)
-          setMissingInputs(false);
-          setSMsg(`Bikers account edited succesfully, sign out first to see changes!`);
-          setVisible(!visible)
-          setSuccessVisible(true)
+            setIsLoading(false)
+            setMissingInputs(false);
+            setSMsg(`Bikers account edited succesfully, sign out first to see changes!`);
+            setVisible(!visible)
+            setSuccessVisible(true)
 
         setuserName('')
         setuserNumber('')
@@ -308,10 +313,113 @@ const Bikers = ({ navigation, animateFrom, }) => {
         setAccType('')
         setUserAddress('')
         })
-      }
+    }
+
+    const CustomHeader = () => (
+        <View style={{flexDirection: 'row', justifyContent: 'space-around', flex: 1}}>
+           <TouchableOpacity style={{borderWidth: 1, borderColor: COLORS.outline, borderRadius: 100, width: 25, height: 25, marginHorizontal: 5, alignItems: 'center', justifyContent: 'center'}} onPress={() => {
+              // Clear input states
+              setImage('');
+              setuserPassword('');
+              setUserAddress('');
+              setBikeNo('');
+              setuserPasswordConfirm('');
+              setuserNumber('');
+              setuserEmail('');
+              setuserName('');
+
+              setAddBiker(!addBiker)
+           }}>
+             <MaterialCommunityIcons color={COLORS.outline} name='plus' size={15}/>
+           </TouchableOpacity>
+           <TouchableOpacity style={{borderWidth: 1, borderColor: COLORS.outline, borderRadius: 100, width: 25, height: 25, marginHorizontal: 5, alignItems: 'center', justifyContent: 'center'}}>
+             <MaterialCommunityIcons color={COLORS.outline} name='reload' size={15}/>
+           </TouchableOpacity>
+           <TouchableOpacity style={{borderWidth: 1, borderColor: COLORS.outline, borderRadius: 100, width: 25, height: 25, marginHorizontal: 5, alignItems: 'center', justifyContent: 'center'}} onPress={() => {
+             setSearch(!search)
+           }}>
+             <MaterialIcons color={COLORS.outline} name='search' size={15}/>
+           </TouchableOpacity>
+        </View>
+    )
+    
+    const searchQ = (sQuery) => {
+    if(sQuery !== ''){
+        let temp = bikers.filter((item) => String(item.username).includes(sQuery) || String(item.gender).includes(sQuery))
+        setBikers(temp);
+        if(temp.length === 0){
+            setSearchNone(true);
+        } else{
+            setSearchNone(false);
+        }
+        } else {
+        setSearchNone(false);
+        setBikers(tempSearch);
+        }
+    }
+
+    const fetchLocationAddress = async (reg) => {
+    if (!reg) {
+        return; // Do nothing if location is not available
+    }
+    
+    try {
+        const {latitude, longitude} = await reg;
+        const response = await Location.reverseGeocodeAsync({ latitude, longitude });
+        const address = response[0]; // Assuming the first address is relevant
+        
+        //updating the location state
+        setMyLocation(address);
+        setShowLoc('flex')
+    } catch (error) {
+        console.error('Error fetching location address:', error);
+    }
+    };
+
+    onRegionChange = region => {
+        setMapRegion(region)
+        fetchLocationAddress(region);
+    };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, {backgroundColor: COLORS.surface}]}>
+            <Header
+                title='Bikers'
+                titleColor={COLORS.outline}
+                rightView={search ? null : <CustomHeader/>}
+            />
+
+            {search ? (
+            <View style={{width: screenWidth}}>
+                <Searchbar
+                    mode='bar'
+                    placeholder="Search by biker name, gender"
+                    value={searchQuery}
+                    onChangeText={(searchQuery) => {
+                        setSearchQuery(searchQuery);
+                        searchQ(searchQuery);
+                    }}
+                    right={() => (<MaterialCommunityIcons name='close' size={20} style={{paddingRight: 10}} color={COLORS.outline} onPress={() => {
+                        setSearchQuery('')
+                        setSearch(false);
+                        // setShops(tempSearch);
+                        setSearchNone(false);
+                    }}/>)}
+                    onClearIconPress={() => setSearch(false)}
+                    style={{borderRadius: 0}}
+                    inputStyle={{color: COLORS.outline}}
+                    />
+            </View>
+            ):(
+            <></>
+            )}
+            
+            {searchNone && (
+                <>
+                <Text style={[STYLES.textNormal, {fontSize: 18, paddingVertical: 10}]}>No search results found :(</Text>
+                </>
+            )}
+
             <Portal>
                 {/* Edit biker modal */}
                 <Modal visible={visible} onDismiss={() => setVisible(!visible)} contentContainerStyle={[STYLES.modalContainer, { height: screenHeight - 300 }]}>
@@ -354,14 +462,16 @@ const Bikers = ({ navigation, animateFrom, }) => {
 
                             {isLoading ? (
                                 <Button mode="contained" style={{borderRadius: 0, width: screenWidth - 50, paddingVertical: 5, marginVertical: 5, backgroundColor: COLORS.background}}>
-                                <ActivityIndicator animating={true} color={COLORS.button} />
+                                    <ActivityIndicator animating={true} color={COLORS.button} />
                                 </Button>
                             ):(
-                                <>
-                                    <CustomButton text='Update Changes' onPress={() => {
-                                        handleProfileEdit();
-                                    }} />
-                                </>
+                                <TouchableOpacity onPress={() => {
+                                    handleProfileEdit();
+                                }}>
+                                    <Button mode='contained' style={{borderRadius: 0, paddingVertical: 5, marginVertical: 5, backgroundColor: COLORS.button}}>
+                                        Update Changes
+                                    </Button>
+                                </TouchableOpacity>
                             )}
 
                             
@@ -382,7 +492,6 @@ const Bikers = ({ navigation, animateFrom, }) => {
                                     onPress={pickImage}
                                     style={{
                                         padding: 5,
-                                        backgroundColor: "#fff",
                                         width: screenWidth - 80,
                                         marginBottom: 15,
                                         flexDirection: "row",
@@ -492,18 +601,22 @@ const Bikers = ({ navigation, animateFrom, }) => {
                                 </Button>
                             ) : (
                                 <>
-                                    <CustomButton text='Add Biker' onPress={() => {
-                                        // alert('Successfully')
+                                    <TouchableOpacity onPress={() => {
                                         handleClick();
-                                    }} />
-                                    <CustomButton type='cancel' text='Cancel' onPress={() => {
-                                        // alert('Successfully')
+                                        }}>
+                                        <Button mode='contained' style={{borderRadius: 0, paddingVertical: 5, marginVertical: 5, backgroundColor: COLORS.button}}>
+                                            Add Biker
+                                        </Button>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity onPress={() => {
                                         setAddBiker(!addBiker)
-                                    }} />
-                                    
+                                        }}>
+                                        <Button mode='contained' style={{borderRadius: 0, paddingVertical: 5, marginVertical: 5, backgroundColor: COLORS.error}}>
+                                           Cancel
+                                        </Button>
+                                    </TouchableOpacity>
                                 </>
                             )}
-                            
                         </ScrollView>
                     </View>
                 </Modal>
@@ -570,16 +683,15 @@ const Bikers = ({ navigation, animateFrom, }) => {
                     </Dialog.Actions>
                 </Dialog>
             </Portal>
-
-            <Header title='Bikers' backPress={() => navigation.goBack()} menuPress={() => navigation.toggleDrawer()} />
-
-            <ScrollView horizontal={true} onScroll={onScroll} showsVerticalScrollIndicator={true} style={{ height: screenHeight - 580, backgroundColor: COLORS.background, borderBottomLeftRadius: 20, borderBottomRightRadius: 20 }}>
+        
+            <ScrollView horizontal={true} onScroll={onScroll} showsVerticalScrollIndicator={true}>
                 <FlatList
                     data={bikers}
                     key={(item, index) => index}
                     keyExtractor={(item, index) => index}
                     renderItem={({ item, index }) => (
                     <BikeCard 
+                        size="large"
                         name={item.username} 
                         gender={item.gender} 
                         accType={item.accountType}
@@ -593,32 +705,8 @@ const Bikers = ({ navigation, animateFrom, }) => {
                     />
                     )}
                 />
-
             </ScrollView>
 
-            <AnimatedFAB
-                icon={'plus'}
-                label={'Add A Biker      '}
-                extended={isExtended}
-                onPress={() => {
-                    // Clear input states
-                    setImage('');
-                    setuserPassword('');
-                    setUserAddress('');
-                    setBikeNo('');
-                    setuserPasswordConfirm('');
-                    setuserNumber('');
-                    setuserEmail('');
-                    setuserName('');
-
-                    setAddBiker(!addBiker)
-                }}
-                visible={fabVisible}
-                animateFrom='right'
-                iconMode={'static'}
-                style={[styles.fabStyle, fabStyle, { backgroundColor: COLORS.button }]}
-                color={COLORS.background}
-            />
             <Portal>
                 <Snackbar
                     style={{ backgroundColor: COLORS.error }}
@@ -649,6 +737,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingBottom: 15,
         flexGrow: 1,
+        backgroundColor: '#fff'
     },
     fabStyle: {
         bottom: 16,

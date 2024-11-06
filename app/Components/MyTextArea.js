@@ -3,12 +3,13 @@ import React from 'react'
 import { TextInput } from 'react-native-paper'
 import myTheme from '../utils/theme'
 
-const MyTextArea = ({label, right, type, placeholder, value, onChangeFunction, disabled}) => {
+const MyTextArea = ({label, right, type, placeholder, value, onChangeFunction, disabled, onPress}) => {
   const { COLORS, screenHeight, screenWidth, STYLES } = myTheme();
 
   return (
     <View style={{width: screenWidth}}>
       <TextInput
+          onPress={onPress}
           style={{backgroundColor: 'transparent', height: 110, paddingBottom: 10, overflow: "scroll"}}
           disabled = {disabled}
           label={label}

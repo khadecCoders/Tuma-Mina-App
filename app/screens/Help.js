@@ -13,9 +13,10 @@ const Help = ({ navigation }) => {
     const { COLORS, screenHeight, screenWidth, STYLES } = myTheme();
 
   return (
-    <View style={styles.container}>
-        <Header title='Help' backPress={() => navigation.goBack()} menuPress={() => navigation.toggleDrawer()}/>
-            <Card mode='elevated' style={{width: '95%', padding: 10, marginTop: 8}}>
+    <View style={[styles.container,  {backgroundColor: COLORS.surface}]}>
+            <Header title='Help' titleColor={COLORS.outline}/>
+
+            <View style={{width: '95%', padding: 10, marginTop: 8}}>
                 <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5, paddingVertical: 8}}>
                     <Text style={STYLES.textNormal}>info@tumamina.ac.zw</Text>
                     <MaterialIcons name="email" size={25} color={COLORS.outline} />
@@ -31,7 +32,7 @@ const Help = ({ navigation }) => {
                     <MaterialCommunityIcons name="web" size={25} color={COLORS.outline} />
                 </View>
                 <Divider />
-            </Card>
+            </View>
     </View>
   )
 }

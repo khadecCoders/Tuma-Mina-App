@@ -14,7 +14,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.khadecmagic.tumamina"
+      "bundleIdentifier": "com.khadecmagic.tumamina",
+      "infoPlist": {
+        "LSApplicationQueriesSchemes": ["tel", "sms"]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -44,7 +47,13 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Allow Tuma Mina to use your location."
         }
-      ]
+      ],
+     [ "expo-camera",
+      {
+        "cameraPermission": "Allow Tuma Mina to access your camera",
+        "microphonePermission": "Allow Tuma Mina to access your microphone",
+        "recordAudioAndroid": true
+      }]
     ],
     "experiments": {
       "typedRoutes": true

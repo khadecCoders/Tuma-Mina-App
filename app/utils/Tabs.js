@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native'
+import { StyleSheet, View, Platform } from 'react-native'
 import React from 'react'
 import { shadow, Text } from 'react-native-paper'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -11,43 +11,21 @@ import About from "../screens/About"
 import StoresRestaurants from "../screens/StoresRestaurants"
 import TermsAndCons from "../screens/TermsAndCons";
 import More from "../screens/More";
-import Chats from "../screens/Chats";
+// import Chats from "../screens/Chats";
 import Bikers from "../screens/Bikers";
-import Create from "../screens/Create";
+import Help from "../screens/Help";
+import Contacts from '../screens/Contacts';
 import TaskNavigation from './TaskNavigation';
 import myTheme from './theme';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import { useLogin } from './LoginProvider';
 
 const Tab = createBottomTabNavigator();
 
-const CustomTabBarButton = ({children, onPress, COLORS}) => (
-  <TouchableOpacity 
-    onPress={onPress}
-    style={{
-      top: -10,
-      justifyContent:'center',
-      alignItems: 'center',
-      ...styles.shadow,
-      shadowColor: 'rgb(118, 118, 128)',
-
-    }}
-  >
-    <View
-      style={{
-        width: 50,
-        height: 50,
-        borderRadius: 35,
-        backgroundColor: 'rgb(83, 172, 230)',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}
-    >{children}</View>
-  </TouchableOpacity>
-)
-
 const Tabs = () => {
   const { COLORS, screenHeight, screenWidth, STYLES } = myTheme();
+  const { profile } = useLogin();
 
   return (
     <Tab.Navigator
@@ -55,68 +33,160 @@ const Tabs = () => {
           tabBarLabel: '',
           headerShown: false,
           tabBarStyle: {
-            position: 'absolute',
-            bottom: 20,
-            left: 20,
-            right: 20,
-            elevation: 0,
+            width: '100%',
             backgroundColor: COLORS.background,
-            borderRadius: 15,
-            height: 80,
-            ...styles.shadow,
-            shadowColor: COLORS.outline,
+            paddingBottom: Platform.OS === 'android' ? 10 : 0,
+            height: 70,
+            paddingHorizontal: 10
           }    
     })}
     >
         <Tab.Screen name='Tasks' component={Orders} options={{
           tabBarIcon: ({focused}) => (
             <View style={{alignItems: 'center', justifyContent: 'center', top: 10}}>
-              <MaterialCommunityIcons name='file-document-multiple-outline' size={25} color={focused ? COLORS.button : COLORS.outline}/>
-              <Text style={{color: focused ? COLORS.button : COLORS.outline, fontSize: 13}}>Tasks</Text>
+              <MaterialCommunityIcons name='file-document-multiple-outline' size={20} color={focused ? COLORS.button : COLORS.outline}/>
+              <Text style={{color: focused ? COLORS.button : COLORS.outline, fontSize: 13}}>{profile.accountType === 'Public' ? 'Deliveries' : 'Tasks'} </Text>
             </View>
           )
         }}/>
         <Tab.Screen name='Shops' component={StoresRestaurants} options={{
           tabBarIcon: ({focused}) => (
             <View style={{alignItems: 'center', justifyContent: 'center', top: 10}}>
-              <MaterialIcons name='shop' size={25} color={focused ? COLORS.button : COLORS.outline}/>
+              <MaterialIcons name='shop' size={20} color={focused ? COLORS.button : COLORS.outline}/>
               <Text style={{color: focused ? COLORS.button : COLORS.outline, fontSize: 13}}>Shops</Text>
             </View>
           )
         }}/>
-        <Tab.Screen name='Drivers' component={Bikers} options={{
+
+        {profile.accountType === "Admin" && (
+            <Tab.Screen name='Drivers' component={Bikers} options={{
+              tabBarIcon: ({focused}) => (
+                <View style={{alignItems: 'center', justifyContent: 'center', top: 10}}>
+                  <MaterialCommunityIcons name='bike-fast' size={20} color={focused ? COLORS.button : COLORS.outline}/>
+                  <Text style={{color: focused ? COLORS.button : COLORS.outline, fontSize: 13}}>Drivers</Text>
+                </View>
+              )
+            }}/>
+        )}
+
+        {/* <Tab.Screen name='Chats' component={Chats} options={{
           tabBarIcon: ({focused}) => (
             <View style={{alignItems: 'center', justifyContent: 'center', top: 10}}>
-              <MaterialCommunityIcons name='bike-fast' size={25} color={focused ? COLORS.button : COLORS.outline}/>
-              <Text style={{color: focused ? COLORS.button : COLORS.outline, fontSize: 13}}>Drivers</Text>
-            </View>
-          )
-        }}/>
-        <Tab.Screen name='Chats' component={Chats} options={{
-          tabBarIcon: ({focused}) => (
-            <View style={{alignItems: 'center', justifyContent: 'center', top: 10}}>
-              <MaterialCommunityIcons name='wechat' size={25} color={focused ? COLORS.button : COLORS.outline}/>
+              <MaterialCommunityIcons name='wechat' size={20} color={focused ? COLORS.button : COLORS.outline}/>
               <Text style={{color: focused ? COLORS.button : COLORS.outline, fontSize: 13}}>Chats</Text>
             </View>
           )
+        }}/> */}
+
+        <Tab.Screen name='Addresses' component={Addresses} options={{
+          tabBarIcon: ({focused}) => (
+            <View style={{alignItems: 'center', justifyContent: 'center', top: 10}}>
+              <MaterialCommunityIcons name='wechat' size={20} color={focused ? COLORS.button : COLORS.outline}/>
+              <Text style={{color: focused ? COLORS.button : COLORS.outline, fontSize: 13}}>Addresses</Text>
+            </View>
+          ),
+          tabBarButton: () => {
+            if(profile.accountType === "Public"){
+              return null
+            } else {return true}
+          }
         }}/>
+
+      {profile.accountType === 'Public' && (
+        <>
+           <Tab.Screen name='MyAddresses' component={Addresses} options={{
+        tabBarIcon: ({focused}) => (
+          <View style={{alignItems: 'center', justifyContent: 'center', top: 10}}>
+            <MaterialCommunityIcons name='wechat' size={20} color={focused ? COLORS.button : COLORS.outline}/>
+            <Text style={{color: focused ? COLORS.button : COLORS.outline, fontSize: 13}}>Addresses</Text>
+          </View>
+        ),
+      }}/>
+
+      <Tab.Screen name='MyAccount' component={Account} options={{
+          tabBarIcon: ({focused}) => (
+            <View style={{alignItems: 'center', justifyContent: 'center', top: 10}}>
+              <MaterialCommunityIcons name='account' size={20} color={focused ? COLORS.button : COLORS.outline}/>
+              <Text style={{color: focused ? COLORS.button : COLORS.outline, fontSize: 13}}>Account</Text>
+            </View>
+          )
+        }}/>
+        </>
+      )}
+       
+       {profile.accountType !== "Public" && (
+         <Tab.Screen name='Contacts' component={Contacts} options={{
+          tabBarIcon: ({focused}) => (
+            <View style={{alignItems: 'center', justifyContent: 'center', top: 10}}>
+              <MaterialCommunityIcons name='contacts' size={20} color={focused ? COLORS.button : COLORS.outline}/>
+              <Text style={{color: focused ? COLORS.button : COLORS.outline, fontSize: 13}}>Contacts</Text>
+            </View>
+          ),
+          
+        }}/>
+       )}
+
+        <Tab.Screen name='Account' component={Account} options={{
+          tabBarIcon: ({focused}) => (
+            <View style={{alignItems: 'center', justifyContent: 'center', top: 10}}>
+              <MaterialCommunityIcons name='account' size={20} color={focused ? COLORS.button : COLORS.outline}/>
+              <Text style={{color: focused ? COLORS.button : COLORS.outline, fontSize: 13}}>Account</Text>
+            </View>
+          ), 
+          tabBarButton: () => {
+            if(profile.accountType === "Public"){
+              return null
+            } else {return true}
+          }
+        }}/>
+
         <Tab.Screen name='More' component={More} options={{
           tabBarIcon: ({focused}) => (
             <View style={{alignItems: 'center', justifyContent: 'center', top: 10}}>
-              <MaterialCommunityIcons name='dots-grid' size={25} color={focused ? COLORS.button : COLORS.outline}/>
+              <MaterialCommunityIcons name='forwardburger' size={20} color={focused ? COLORS.button : COLORS.outline}/>
               <Text style={{color: focused ? COLORS.button : COLORS.outline, fontSize: 13}}>More</Text>
             </View>
           )
         }}/>
+        
         <Tab.Screen name='Create'  component={TaskNavigation} options={{
           tabBarIcon: ({focused}) => (
             <View style={{alignItems: 'center', justifyContent: 'center', top: 10}}>
-              <MaterialCommunityIcons name='dots-grid' size={25} color={focused ? COLORS.button : COLORS.outline}/>
+              <MaterialCommunityIcons name='backburger' size={20} color={focused ? COLORS.button : COLORS.outline}/>
               <Text style={{color: focused ? COLORS.button : COLORS.outline, fontSize: 13}}>Create</Text>
             </View>
           ),
           tabBarButton: () => null
-          
+        }}/>
+
+        <Tab.Screen name='About'  component={About} options={{
+          tabBarIcon: ({focused}) => (
+            <View style={{alignItems: 'center', justifyContent: 'center', top: 10}}>
+              <MaterialCommunityIcons name='backburger' size={20} color={focused ? COLORS.button : COLORS.outline}/>
+              <Text style={{color: focused ? COLORS.button : COLORS.outline, fontSize: 13}}>About</Text>
+            </View>
+          ),
+          tabBarButton: () => null
+        }}/>
+
+        <Tab.Screen name='T&C'  component={TermsAndCons} options={{
+          tabBarIcon: ({focused}) => (
+            <View style={{alignItems: 'center', justifyContent: 'center', top: 10}}>
+              <MaterialCommunityIcons name='backburger' size={20} color={focused ? COLORS.button : COLORS.outline}/>
+              <Text style={{color: focused ? COLORS.button : COLORS.outline, fontSize: 13}}>Create</Text>
+            </View>
+          ),
+          tabBarButton: () => null
+        }}/>
+
+        <Tab.Screen name='Help'  component={Help} options={{
+          tabBarIcon: ({focused}) => (
+            <View style={{alignItems: 'center', justifyContent: 'center', top: 10}}>
+              <MaterialCommunityIcons name='help' size={20} color={focused ? COLORS.button : COLORS.outline}/>
+              <Text style={{color: focused ? COLORS.button : COLORS.outline, fontSize: 13}}>Help</Text>
+            </View>
+          ),
+          tabBarButton: () => null
         }}/>
     </Tab.Navigator>
   )

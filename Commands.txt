@@ -1,0 +1,8 @@
+### Ios simulator dev build
+ eas build --profile simulator --platform ios
+
+### Android dev build
+eas build --profile development --platform android
+
+### Android  build
+eas build -p android --profile preview

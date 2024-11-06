@@ -20,12 +20,13 @@ const StoreCard = ({name, addr, image, category, onPress, onPressDelete}) => {
   const { profile } = useLogin();
 
   return (
+    <>
    <View style={{justifyContent: 'space-between',  width: screenWidth - 10 , alignItems: 'center'}}>
      <TouchableOpacity style={{flexDirection: 'row', flex: 1, alignItems: 'center', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 5, marginVertical: 5, width: screenWidth - 20}}>
         <Image source={image} style={STYLES.homeCardImage2} />
         <View style={{flexDirection: 'row', justifyContent: 'space-between', flex: 1}}>
           <View style={{width: '80%'}}>
-              <Text style={[STYLES.textNormal, {fontWeight: 'bold', color: '#161F3D'}]}>{name}</Text>
+              <Text style={[STYLES.textNormal, {fontFamily: 'DMSansBold', color: COLORS.onTertiaryContainer}]}>{name}</Text>
               <Text numberOfLines={2} ellipsizeMode='tail' style={[STYLES.textNormal]}>{addr}</Text>
               <Text style={[STYLES.textNormal, {fontFamily: 'DMSansItalic'}]}>{category}</Text>
           </View>
@@ -49,8 +50,9 @@ const StoreCard = ({name, addr, image, category, onPress, onPressDelete}) => {
          )}
         </View>
     </TouchableOpacity>
-    <Divider style={{width: '90%'}} />
    </View>
+    <Divider />
+  </>
   )
 }
 

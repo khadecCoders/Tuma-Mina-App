@@ -62,10 +62,10 @@ const ForgotPass = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {backgroundColor: COLORS.surface}]}>
       <Image
         source={require("../assets/upperCorner.png")}
-        style={STYLES.upperCorner}
+        style={STYLES.upperCorner2}
       />
 
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -94,16 +94,18 @@ const ForgotPass = () => {
             forgot your password
           </Text>
 
-          <MyInput 
-            isRequired={missingInputs}
-            errorText="Email address is required"
-            value = {email}
-            onChangeFunction={(email) => {
-              setEmail(email)
-            }}
-            label="Email Address" 
-            type="email" 
-          />
+            <View style={{width: screenWidth - 50, marginVertical: 20}}>
+              <MyInput 
+                isRequired={missingInputs}
+                errorText="Email address is required"
+                value = {email}
+                onChangeFunction={(email) => {
+                  setEmail(email)
+                }}
+                label="Email Address" 
+                type="email" 
+              />
+            </View>
 
           <CustomButton text="Send" onPress={() => handleForgot()} />
 
@@ -174,7 +176,6 @@ export default ForgotPass;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
   },

@@ -1,6 +1,6 @@
 import { FlatList, Image, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native'
-import React, { useState, useEffect } from 'react'
-import { ActivityIndicator, AnimatedFAB, Button, Card, Dialog, Divider, Modal, Portal, SegmentedButtons, Snackbar, Text } from 'react-native-paper';
+import React, { useState, useEffect } from 'react';
+import { ActivityIndicator, AnimatedFAB, Button, Card, Dialog, Divider, Modal, Portal, SegmentedButtons, Snackbar, Text, Searchbar } from 'react-native-paper';
 import myTheme from '../utils/theme';
 import { useLogin } from '../utils/LoginProvider';
 import {
@@ -16,6 +16,7 @@ import { onValue, push, ref, remove } from 'firebase/database';
 import { db } from '../config';
 import MapView, {Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
+import { MaterialCommunityIcons } from '@expo/vector-icons'
 import MyTextArea from '../Components/MyTextArea';
 
 const Addresses = ({ navigation, animateFrom }) => {
@@ -57,6 +58,10 @@ const Addresses = ({ navigation, animateFrom }) => {
 
     const [showLoc, setShowLoc] = useState('none');
     const [myLocation, setMyLocation] = useState('');
+    const [search, setSearch] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchNone, setSearchNone] = useState(false);
+    const [tempSearch, setTempSearch] = useState([]);
 
     const fetchLocationAddress = async (reg) => {
         if (!reg) {
@@ -91,6 +96,7 @@ const Addresses = ({ navigation, animateFrom }) => {
 
                     const MyAddresses = newAddresses.filter((item) => item.userId === profile.userId)
                     setAddresses(MyAddresses);
+                    setTempSearch(MyAddresses);
             }
         });
     }, [])
@@ -129,6 +135,7 @@ const Addresses = ({ navigation, animateFrom }) => {
                 setSMsg(`An address has been added to your list of addresses!`);
                 setSuccessVisible(true)
                 setMissingInputs(false)
+                setAddAddress(!addAddress)
 
                 // Clear input states
                 setdelLoc('');
@@ -176,8 +183,83 @@ const Addresses = ({ navigation, animateFrom }) => {
         fetchLocationAddress(region);
     }
 
+    const CustomHeader = () => (
+        <View style={{flexDirection: 'row', justifyContent: 'space-around', flex: 1}}>
+           <TouchableOpacity style={{borderWidth: 1, borderColor: COLORS.outline, borderRadius: 100, width: 25, height: 25, marginHorizontal: 5, alignItems: 'center', justifyContent: 'center'}} onPress={() => {
+               // Clear input states
+               setdelLoc('');
+               setdelRoomNo('');
+               setDelCords('');
+               setdelName('');
+               setdelPhone('');
+               setAddAddress(!addAddress)
+           }}>
+             <MaterialCommunityIcons color={COLORS.outline} name='plus' size={15}/>
+           </TouchableOpacity>
+           <TouchableOpacity style={{borderWidth: 1, borderColor: COLORS.outline, borderRadius: 100, width: 25, height: 25, marginHorizontal: 5, alignItems: 'center', justifyContent: 'center'}}>
+             <MaterialCommunityIcons color={COLORS.outline} name='reload' size={15}/>
+           </TouchableOpacity>
+           <TouchableOpacity style={{borderWidth: 1, borderColor: COLORS.outline, borderRadius: 100, width: 25, height: 25, marginHorizontal: 5, alignItems: 'center', justifyContent: 'center'}} onPress={() => {
+             setSearch(!search)
+           }}>
+             <MaterialIcons color={COLORS.outline} name='search' size={15}/>
+           </TouchableOpacity>
+        </View>
+    )
+    
+    const searchQ = (sQuery) => {
+    if(sQuery !== ''){
+        let temp = addresses.filter((item) => String(item.delName).includes(sQuery) || String(item.delLoc).includes(sQuery) || String(item.roomNo).includes(sQuery) || String(item.delPhone).includes(sQuery))
+        setAddresses(temp);
+        if(temp.length === 0){
+            setSearchNone(true);
+        } else{
+            setSearchNone(false);
+        }
+        } else {
+        setSearchNone(false);
+        setAddresses(tempSearch);
+        }
+    }
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {backgroundColor: COLORS.surface}]}>
+        <Header
+            title='My Addresses'
+            titleColor={COLORS.outline}
+            rightView={search ? null : <CustomHeader/>}
+        />
+
+        {search ? (
+        <View style={{width: screenWidth}}>
+            <Searchbar
+                mode='bar'
+                placeholder="Search by name, address, house No, phone number"
+                value={searchQuery}
+                onChangeText={(searchQuery) => {
+                    setSearchQuery(searchQuery);
+                    searchQ(searchQuery);
+                }}
+                right={() => (<MaterialCommunityIcons name='close' size={20} style={{paddingRight: 10}} color={COLORS.outline} onPress={() => {
+                    setSearchQuery('')
+                    setSearch(false);
+                    // setShops(tempSearch);
+                    setSearchNone(false);
+                }}/>)}
+                onClearIconPress={() => setSearch(false)}
+                style={{borderRadius: 0}}
+                inputStyle={{color: COLORS.outline}}
+                />
+        </View>
+        ):(
+        <></>
+        )}
+        
+        {searchNone && (
+            <>
+            <Text style={[STYLES.textNormal, {fontSize: 18, paddingVertical: 10}]}>No search results found :(</Text>
+            </>
+        )}
         <Portal>
             {/* Map view modal */}
             <Modal visible={viewMap} onDismiss={() => setViewMap(!viewMap)} contentContainerStyle={[STYLES.modalContainer, {justifyContent: 'flex-start',}]}>
@@ -346,22 +428,25 @@ const Addresses = ({ navigation, animateFrom }) => {
                             </Button>
                         ) : (
                             <>
-                                <CustomButton text='Add Address' onPress={() => {
-                                    // alert('Successfully')
+                                <TouchableOpacity onPress={() => {
                                     handleAddAddress()
-                                }} />
-                                <CustomButton type='cancel' text='Cancel' onPress={() => {
-                                    // alert('Successfully')
+                                    }}>
+                                    <Button mode='contained' style={{borderRadius: 0, paddingVertical: 5, marginVertical: 5, backgroundColor: COLORS.button}}>
+                                        Add Address
+                                    </Button>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={() => {
                                     setAddAddress(!addAddress)
-                                }} />
-                                
+                                    }}>
+                                    <Button mode='contained' style={{borderRadius: 0, paddingVertical: 5, marginVertical: 5, backgroundColor: COLORS.error}}>
+                                        Cancel
+                                    </Button>
+                                </TouchableOpacity>
                             </>
                         )}
                 </View>
             </Modal>
         </Portal>
-
-      <Header title='My Addresses' backPress={() => navigation.goBack()} menuPress={() => navigation.toggleDrawer()}/>
 
       <ScrollView horizontal={true} onScroll={onScroll} style={{flex: 1, paddingVertical: 5}}>
       <FlatList
@@ -383,17 +468,6 @@ const Addresses = ({ navigation, animateFrom }) => {
         
         
       </ScrollView>
-      <AnimatedFAB
-        icon={'plus'}
-        label={'Add An Address'}
-        extended={isExtended}
-        onPress={() => setAddAddress(!addAddress)}
-        visible={fabVisible}
-        animateFrom='right'
-        iconMode={'static'}
-        style={[styles.fabStyle, fabStyle, { backgroundColor: COLORS.button }]}
-        color={COLORS.background}
-    />
     <Portal>
         <Snackbar
             style={{ backgroundColor: COLORS.error }}

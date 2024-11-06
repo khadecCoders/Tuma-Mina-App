@@ -10,25 +10,24 @@ const About = ({ navigation }) =>  {
   const { isLoggedIn, setIsLoggedIn, profile, setProfile } = useLogin();
 
   return (
-    <View>
-      <Header title='About Us' backPress={() => navigation.goBack()} menuPress={() => navigation.toggleDrawer()}/>
-        <Card  mode='contained' elevation={5} style={{backgroundColor: '#fff', padding: 5, marginVertical: 5, marginHorizontal:5}}>
-          <ScrollView>
+    <View style={{backgroundColor: COLORS.surface, flex: 1}}>
+      <Header title='About Us' titleColor={COLORS.outline}/>
+          <ScrollView style={{paddingHorizontal: 10, paddingVertical: 10}}>
               <Text style={[STYLES.textNormal]}>Welcome to Tuma Mina, your trusted delivery partner. We're passionate about delivering excellence, connecting people and businesses nationwide.</Text>
-              <Text style={{fontSize: 15, fontFamily: 'DMSansSemiBold', color: '161F3D', marginTop: 10}}>Our Values</Text>
+              <Text style={{fontSize: 15, fontFamily: 'DMSansSemiBold', color: COLORS.onSurfaceVariant, marginTop: 10}}>Our Values</Text>
               <Text style={{fontSize: 15, fontFamily: 'DMSansRegular', color: COLORS.outline}}>1. Integrity</Text>
               <Text style={{fontSize: 15, fontFamily: 'DMSansRegular', color: COLORS.outline}}>2. Honesty</Text>
               <Text style={{fontSize: 15, fontFamily: 'DMSansRegular', color: COLORS.outline}}>3. Reliable Service</Text>
               <Text style={{fontSize: 15, fontFamily: 'DMSansRegular', color: COLORS.outline}}>4. Customer Satisfaction</Text>
               <Text style={{fontSize: 15, fontFamily: 'DMSansRegular', color: COLORS.outline}}>5. Efficiency & Speed</Text>
 
-              <Text style={{fontSize: 15, fontFamily: 'DMSansSemiBold', color: '161F3D', marginTop: 10}}>Our Vision</Text>
+              <Text style={{fontSize: 15, fontFamily: 'DMSansSemiBold', color: COLORS.onSurfaceVariant, marginTop: 10}}>Our Vision</Text>
               <Text style={{fontSize: 15, fontFamily: 'DMSansRegular', color: COLORS.outline}}>To be the leading nationwide delivery service provider, setting new industry standards.</Text>
 
-              <Text style={{fontSize: 15, fontFamily: 'DMSansSemiBold', color: '161F3D', marginTop: 10}}>Our Mission</Text>
+              <Text style={{fontSize: 15, fontFamily: 'DMSansSemiBold', color: COLORS.onSurfaceVariant, marginTop: 10}}>Our Mission</Text>
               <Text style={{fontSize: 15, fontFamily: 'DMSansRegular', color: COLORS.outline}}>To provide efficient, reliable, and customer-centric delivery services, seamlessly connecting people and businesses.</Text>
 
-              <Text style={{fontSize: 15, fontFamily: 'DMSansSemiBold', color: '161F3D', marginTop: 10}}>Our Services</Text>
+              <Text style={{fontSize: 15, fontFamily: 'DMSansSemiBold', color: COLORS.onSurfaceVariant, marginTop: 10}}>Our Services</Text>
               <Text style={{fontSize: 15, fontFamily: 'DMSansRegular', color: COLORS.outline}}>1. Medical Deliveries</Text>
               <Text style={{fontSize: 15, fontFamily: 'DMSansRegular', color: COLORS.outline}}>2. Corporate Errands</Text>
               <Text style={{fontSize: 15, fontFamily: 'DMSansRegular', color: COLORS.outline}}>3. Pick Up and Drop</Text>
@@ -42,7 +41,6 @@ const About = ({ navigation }) =>  {
               <Text style={{fontSize: 15, fontFamily: 'DMSansRegular', color: COLORS.outline}}>11. School Services</Text>
               <Text style={{fontSize: 15, fontFamily: 'DMSansRegular', color: COLORS.outline}}>12. Shuttle Services</Text>
           </ScrollView>
-        </Card>
     </View>
 
   )

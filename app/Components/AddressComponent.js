@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native'
 import React from 'react'
-import { Card, Text } from 'react-native-paper'
+import { Card, Divider, Text } from 'react-native-paper'
 import myTheme from '../utils/theme';
 import { TouchableOpacity } from 'react-native';
 import {
@@ -17,7 +17,8 @@ const AddressComponent = ({loc, houseNo, onPressDelete, onPressAdd, deleteItem, 
     const { COLORS, screenHeight, screenWidth, STYLES } = myTheme();
 
   return (
-    <TouchableOpacity onPress={onPressAdd} style={{flexDirection: 'row', flex:1, backgroundColor: '#fff', padding: 5, marginVertical: 3, justifyContent: 'space-between', width: screenWidth -20}}>
+    <>
+    <TouchableOpacity onPress={onPressAdd} style={{flexDirection: 'row', flex:1, backgroundColor: COLORS.surface, paddingHorizontal: 15, paddingVertical: 8, marginVertical: 3, justifyContent: 'space-between', width: screenWidth -20}}>
         <View>
             <View style={{flexDirection: 'row',  alignItems: 'flex-start'}}>
                 {/* <Text style={[STYLES.textNormal, {fontWeight: 'bold'}]}>Address: </Text> */}
@@ -46,6 +47,8 @@ const AddressComponent = ({loc, houseNo, onPressDelete, onPressAdd, deleteItem, 
         <></>
       )}
     </TouchableOpacity>
+    <Divider style={{backgroundColor: COLORS.outline, width: screenWidth}}/>
+    </>
   )
 }
 

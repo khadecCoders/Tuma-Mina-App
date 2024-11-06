@@ -28,7 +28,8 @@ import MapView, {Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { FlatList } from 'react-native';
 import AddressComponent from '../Components/AddressComponent';
-import Animated from 'react-native-reanimated';
+import Toast from 'react-native-toast-message';
+import axios from 'axios';
 
 const DeliveryType = ({ route, navigation }) => {
   const { isLoggedIn, setIsLoggedIn, profile, setProfile, location, setLocation, setLocationData  } = useLogin();
@@ -42,9 +43,6 @@ const DeliveryType = ({ route, navigation }) => {
   const [imageName, setImageName] = useState('');
   const [modalNo, setModalNo] = useState(1);
   const [shop, setShop] = useState('');
-  const [orderCat, setOrderCat] = useState('');
-  const [orderType, setOrderType] = useState('');
-  const [itemImage, setItemImage] = useState('');
   const [packageName, setPackageName] = useState('');
   const [addInfo, setAddInfo] = useState('');
   const [pickUpLoc, setPickupLoc] = useState('');
@@ -58,7 +56,6 @@ const DeliveryType = ({ route, navigation }) => {
   const [delBuild, setdelBuild] = useState('');
   const [delRoomNo, setdelRoomNo] = useState('');
   const [delPhone, setdelPhone] = useState('');
-  const [shopName, setShopName] = useState('');
   const [shopAdd, setShopAdd] = useState('');
   const [addInstr, setAddInstr] = useState('');
   const [paymentMeth, setPaymentMeth] = useState('Cash upon delivery');
@@ -78,6 +75,9 @@ const DeliveryType = ({ route, navigation }) => {
   const [layers, setLayers] = useState("none");
   const [deliveryCat, setDeliverycat] = useState('');
   const [radioValue, setRadioValue] = useState('Cash On Delivery');
+  const [proofOfDel, setProofOfDel] = useState('');
+  const [disTime, setDisTime] = useState({});
+  const [totPrice, setTotPrice] = useState(0);
   const [mapRegion, setMapRegion] = useState({           
         latitude: location.latitude, 
         longitude: location.longitude,
@@ -119,6 +119,7 @@ const DeliveryType = ({ route, navigation }) => {
 
                 const MyAddresses = newAddresses.filter((item) => item.userId === profile.userId)
                 setAddresses(MyAddresses);
+                setModalNo(1);
         }
     });
 
@@ -136,6 +137,23 @@ const DeliveryType = ({ route, navigation }) => {
         }
     });
 }, [])
+
+    const showSuccessToast = () => {
+        Toast.show({
+            type: 'success',
+            text1: 'Success',
+            text2: 'Task successfully completed!'
+        }); 
+    }
+
+    const showErrorToast = () => {
+        console.log('error')
+        Toast.show({
+            type: 'error',
+            text1: 'Error',
+            text2: 'Some required inputs are missing, please fill all the red boxes with required.'
+        }); 
+    }
 
   const pickImage = async () => {
     // No permissions request is necessary for launching the image library
@@ -163,9 +181,9 @@ const DeliveryType = ({ route, navigation }) => {
 
   const handleClick = async () => {
     if(image){
-      await uploadImage(image, "image");
+        await uploadImage(image, "image");
     }else{
-      handleUpload(image)
+        handleUpload(image)
     }
   }
 
@@ -206,7 +224,7 @@ const DeliveryType = ({ route, navigation }) => {
         deliveryDate: '',
         delType: delType,
         deliveryCat: deliveryCat,
-        deliveryFee: 'US$ 14',
+        deliveryFee: totPrice,
         packagePicture: profilePic,
         packagePicName: imageName,
         orderStatus: 'Pending',
@@ -226,7 +244,12 @@ const DeliveryType = ({ route, navigation }) => {
         shop: shop,
         shopAdd: shopAdd,
         pickUpCords: pickUpCords,
-        delCords: delCords
+        delCords: delCords,
+        proofOfDel: proofOfDel,
+        receiveNotes: '',
+        idPicName: '',
+        idPicUrl: '',
+
 
     }).then(() => {
         setIsLoading(false)
@@ -235,6 +258,7 @@ const DeliveryType = ({ route, navigation }) => {
 
         // Clear input states
         setImage('');
+        setProofOfDel('');
         setPackageName('');
         setAddInfo('');
         setPickupLoc('');
@@ -248,6 +272,8 @@ const DeliveryType = ({ route, navigation }) => {
         setdelRoomNo('');
         setdelPhone('');
         setAddInstr('');
+        setShop('');
+        setShopAdd('');
 
     }).catch((error) => {
         setIsLoading(false)
@@ -279,43 +305,125 @@ const DeliveryType = ({ route, navigation }) => {
     fetchLocationAddress(region);
   };
 
+  const calculateDisTime = async (pickUp, Dest) => {
+    console.log("Cords:", pickUp.latitude, Dest.latitude);
+    console.log('Calculating');
+    setDisTime([]);
+    if(Dest && pickUp){
+        const response = await axios.get(`https://maps.googleapis.com/maps/api/distancematrix/json?origins=${pickUp.latitude},${pickUp.longitude}&destinations=${Dest.latitude},${Dest.longitude}&key=AIzaSyCcYXQM7H4EiDTMxSY3g6aSYx7U0FPLkiI`);
+        setDisTime(response.data.rows[0].elements[0]);
+        console.log(disTime);
+        console.log(response.data.origin_addresses[0]);
+        console.log(response.data.destination_addresses[0]);
+    } else{
+        //No distance to calculate yet
+        console.log('No distance to calculate yet')
+    }
+  }
+
+  const calcTotalPrice = async () => {
+    let val = await disTime.distance.value/1000;
+    if(val){
+        if(val <= 3 && val > 0){
+            setTotPrice(2);
+            console.log("Total", tot)
+        } else if(val <= 5 && val > 3){
+            setTotPrice(3);
+        } else if(val <= 8 && val > 4){
+            setTotPrice(4);
+        } else if(val <= 9 && val > 5){
+            setTotPrice(5);
+        } else if(val <= 12 && val > 6){
+            setTotPrice(6);
+        } else if(val > 12){
+            if(val/12 >= 1){
+                let val2 = (val/12 - 1) * 0.5;
+                setTotPrice(6 + val2);
+            } else {
+                setTotPrice(6);
+            }
+        } else{
+            setTotPrice(6);
+      }
+    } else{
+
+    }
+}
+
   const CustomHeader = () => (
-    <View style={{flexDirection: 'row', justifyContent: 'space-around', flex: 1}}>
-       <TouchableOpacity style={{flexDirection: 'row', alignItems: 'center'}} onPress={() => {
-        _handlePrevious()
-       }}>
-        <AntDesign color={COLORS.outline} name='left' size={18}/>
-        <Text style={[STYLES.textNormal, {fontSize: 20, marginLeft: 5}]}>Previous</Text>
-       </TouchableOpacity>
-    </View>
+    modalNo !== 6 ? (
+        <View style={{flexDirection: 'row', justifyContent: 'space-around', flex: 1}}>
+            <TouchableOpacity style={{flexDirection: 'row', alignItems: 'center'}} onPress={() => {
+            _handlePrevious()
+            }}>
+            <AntDesign color={COLORS.outline} name='left' size={18}/>
+            <Text style={[STYLES.textNormal, {fontSize: 20, marginLeft: 5}]}>Previous</Text>
+            </TouchableOpacity>
+        </View>
+    ):(
+        <></>
+    )
    );
 
   const RightView = () => (
     <View style={{flexDirection: 'row', justifyContent: 'space-around', flex: 1}}>
        <TouchableOpacity style={{flexDirection: 'row', alignItems: 'center', borderRadius: 60, }} onPress={() => {
-        _handleNext()
+        if(proofOfDel !== ""){
+            _handleNext()
+            calculateDisTime(pickUpCords, delCords);
+            calcTotalPrice();
+
+        } else{
+            setMissingInputs(true);
+            showErrorToast()
+        }
        }}>
-        <Text style={[STYLES.textNormal, {fontSize: 20, marginLeft: 5}]}>{modalNo === 4 ? "Confirm" : modalNo === 5 ? "Create" : "Next"}</Text>
-        <AntDesign color={COLORS.outline} name='right' size={18}/>
+        <Text style={[STYLES.textNormal, {fontSize: 20, marginLeft: 5}]}>{modalNo === 4 ? "Confirm" : modalNo >= 6 ? "" : "Next"}</Text>
+        {modalNo < 6 && <AntDesign color={COLORS.outline} name='right' size={18}/>}
        </TouchableOpacity>
     </View>
    );
 
+  const RightView2 = () => (
+    <View style={{flexDirection: 'row', justifyContent: 'space-around', flex: 1}}>
+       {isLoading ? (
+        <View style={{alignItems: "center"}}>
+            <ActivityIndicator animating={true} color={COLORS.button} />
+        </View>
+       ):(
+        <TouchableOpacity style={{flexDirection: 'row', alignItems: 'center', borderRadius: 60, }} onPress={() => {
+            handleClick();
+        }}>
+            <Text style={[STYLES.textNormal, {fontSize: 20, marginLeft: 5}]}>Create</Text>
+            <AntDesign color={COLORS.outline} name='right' size={18}/>
+        </TouchableOpacity>
+       )}
+    </View>
+   );
+
+   const BackHandler = () => (
+    <View style={{flexDirection: 'row'}}>
+        <TouchableOpacity style={{flexDirection: 'row', alignItems: 'center', borderRadius: 60, paddingRight: 20}} onPress={() => {
+            navigate('Tasks')
+        }}>
+            <AntDesign color={COLORS.outline} name='left' size={18}/>
+        </TouchableOpacity>
+        <Text style={[STYLES.textNormal, {fontSize: 20, marginLeft: 5}]}>{profile.accountType === "Admin" || profile.accountType === "Biker" ? 'Create a task' : 'Create a delivery'}</Text>
+    </View>
+   )
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {backgroundColor: COLORS.surface}]}>
         <Header 
-            title='Create a task' 
+            title='.' 
             titleColor={modalNo > 1 ? COLORS.background : COLORS.outline}
-            leftView={modalNo > 1 ? <CustomHeader/> : null}
-            rightView={modalNo > 2 ? <RightView/> : null}
+            leftView={modalNo > 1 ? <CustomHeader/> : <BackHandler />}
+            rightView={modalNo === 5 ? <RightView2/> : modalNo > 2 ? <RightView/> : modalNo >= 6 ? null : null}
         />
         <Portal>
             {/* Map view modal */}
             <Modal visible={viewMap} onDismiss={() => setViewMap(!viewMap)} contentContainerStyle={[STYLES.modalContainer, {justifyContent: 'flex-start',}]}>
-                <View style={{backgroundColor: '#fff', overflow: 'hidden', paddingVertical: 10, width: '100%', height: screenHeight - 200}}>
-                    <View style={{alignItems: "flex-start"}}>
-                        <Text style={[STYLES.textNormal, {textAlign: 'left', alignSelf: 'flex-start', paddingBottom: 10}]}>Move your map to the center of the marker, then press <Text style={[STYLES.textNormal, { fontFamily: "DMSansItalic", textAlign: 'left', alignSelf: 'flex-start', paddingBottom: 10}]}>"Choose location"</Text>.</Text>
-                    </View>
+                <View style={{backgroundColor: COLORS.surface, overflow: 'hidden', paddingVertical: 10, width: '100%', height: screenHeight - 200}}>
                     <MapView
                         style={styles.map}
                         provider={Platform.OS == "android" ? PROVIDER_GOOGLE : undefined}
@@ -376,32 +484,33 @@ const DeliveryType = ({ route, navigation }) => {
                         <TouchableOpacity style={{ display: showLoc}} onPress={() => {
                             if(cordType === "Pick up"){
                                 setPickupLoc(myLocation.street +", "+myLocation.city +", "+myLocation.country);
-                                setPickUpCords(location);
+                                setShopAdd(myLocation.street +", "+myLocation.city +", "+myLocation.country);
+                                setPickUpCords(mapRegion);
                             } else if(cordType === "Delivery"){
                                 setdelLoc(myLocation.street +", "+myLocation.city +", "+myLocation.country);
-                                setDelCords(location);
+                                setDelCords(mapRegion);
                             } else{
                                 // Do nothing
                             }
                             setCordType('');
                             setViewMap(!viewMap);
                             setVisible(!visible);
+                            calculateDisTime(pickUpCords, delCords);
+
                         }}>
                             <Button compact mode='contained' contentStyle={{width: 'auto'}} style={{borderRadius: 30, width: 'auto', paddingHorizontal: 1}}>Next</Button>
                         </TouchableOpacity>
                     </View>
-
                 </View>
-                
             </Modal>
 
             {/* My addresses modal */}
             <Modal visible={viewAdds} onDismiss={() => setViewAds(!viewAdds)} contentContainerStyle={[STYLES.modalContainer, {justifyContent: 'flex-start',}]}>
-                <View style={{backgroundColor: '#fff', overflow: 'hidden', paddingVertical: 10, width: '100%', height: screenHeight - 200, alignItems: 'center'}}>
+                <View style={{backgroundColor: COLORS.surface, overflow: 'hidden', paddingVertical: 10, width: '100%', height: screenHeight - 200, alignItems: 'center'}}>
                     <View style={{alignItems: "flex-start"}}>
                         <Text style={STYLES.textHeading}>Choose from your addresses</Text>
                     </View>
-                    <ScrollView horizontal={true} style={{flex: 1, paddingVertical: 5, }}>
+                    <ScrollView horizontal={true} style={{flex: 1, paddingVertical: 5, overflow: 'hidden'}}>
                     <FlatList
                             data={addresses}
                             key={(item, index) => index}
@@ -442,13 +551,6 @@ const DeliveryType = ({ route, navigation }) => {
                             />
                             )}
                     />
-                    <View >
-                        <CustomButton type='cancel' text='Cancel' onPress={() => {
-                            // _handlePrevious();
-                            setViewAds(!viewAdds);
-                            setVisible(!visible);
-                        }}/>
-                    </View>
                     </ScrollView>
                 </View>
             </Modal>
@@ -535,9 +637,9 @@ const DeliveryType = ({ route, navigation }) => {
                     </View>
                 </View>
             ) : modalNo === 3 ? (
-                <View style={{height: '75%'}}>
+                <View style={{paddingBottom: 95}}>
                     <ScrollView>
-                        <View style={{backgroundColor: COLORS.backdrop, width: '100%', paddingHorizontal: 20, paddingVertical: 10, marginBottom: 10}}>
+                        <View style={{backgroundColor: COLORS.onSurfaceVariant, width: '100%', paddingHorizontal: 20, paddingVertical: 10, marginBottom: 10}}>
                             <Text style={{color: COLORS.background}}>Add Details</Text>
                         </View>
                         <View style={{alignItems: 'center'}}>
@@ -569,52 +671,113 @@ const DeliveryType = ({ route, navigation }) => {
                                     }
                             </View>
 
-                            <View style={{backgroundColor: COLORS.backdrop, width: '100%', paddingHorizontal: 20, paddingVertical: 10, marginBottom: 10}}>
-                                <Text style={{color: COLORS.background}}>Shop/Restaurant Details</Text>
-                            </View>
-                            <DropdownComponent 
-                            value={shop} label='Shop/Restaurant name' onChangeFunction={(shop) => {
-                                setShop(shop);
-                                const temp = shops.filter((item) => {
-                                    if(item.shopName == shop){
-                                        // console.log('found: ', item.shopName)
-                                        return item
-                                    } else {
-                                        return ''
-                                    }
-                                })
+                            {delType === "Pick and drop" ? (
+                                <>
+                                    <View style={{backgroundColor: COLORS.onSurfaceVariant, width: '100%', paddingHorizontal: 20, paddingVertical: 10, marginBottom: 10}}>
+                                        <Text style={{color: COLORS.background}}>Add Pick Up Location</Text>
+                                    </View>
+                                    <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%'}}>
+                                    <Button icon={() => <MaterialIcons name="touch-app" size={20} color={COLORS.button} />} contentStyle={{flexDirection: 'row-reverse'}} mode="text" style={{borderRadius: 0, marginVertical: 5, backgroundColor: 'transparent',  alignItems: 'flex-start',}} onPress={() => {
+                                            setCordType("Pick up");
+                                            setPickUpCords({})
+                                            setViewMap(!viewMap);
+                                            setVisible(!visible);
+                                        }}>
+                                        Open Map
+                                    </Button>
+                                    <Text style={{fontSize: 15, color: COLORS.outline}}>Or use</Text>
+                                    <Button icon={() => <MaterialIcons name="touch-app" size={20} color={COLORS.button} />} contentStyle={{flexDirection: 'row-reverse'}} mode="text" style={{borderRadius: 0, marginVertical: 5, backgroundColor: 'transparent', alignItems: 'flex-start',}} onPress={() => {
+                                        setCordType("Pick up");
+                                        setPickUpCords({})
+                                            setViewAds(!viewAdds);
+                                            setVisible(!visible);
+                                        }}>
+                                        My Addresses
+                                    </Button>
+                                    </View>
+                                    <Divider />
+                                    <MyTextArea
+                                        placeholder='Pick up Address'
+                                        label='Pick up Address'
+                                        disabled = {true}
+                                        type='add'
+                                        value={pickUpLoc}
+                                        onChangeFunction={(pickUpLoc) => {
+                                            setPickupLoc(pickUpLoc)
+                                        }}
+                                    />
+                                    <MyInput
+                                        placeholder='Apartment/House/Room Number'
+                                        label='Apartment/House/Room Number'
+                                        type='add'
+                                        value={pickUpRoomNo}
+                                        onChangeFunction={(pickUpRoomNo) => setPickUpRoomNo(pickUpRoomNo)}
+                                    />
+                                </>
+                            ):(
+                                <>
+                                    <View style={{backgroundColor: COLORS.onSurfaceVariant, width: '100%', paddingHorizontal: 20, paddingVertical: 10, marginBottom: 10}}>
+                                        <Text style={{color: COLORS.background}}>Shop/Restaurant Details</Text>
+                                    </View>
+                                    <DropdownComponent 
+                                    value={shop} label='Shop/Restaurant name' onChangeFunction={(shop) => {
+                                        setShop(shop);
+                                        const temp = shops.filter((item) => {
+                                            if(item.shopName == shop){
+                                                // console.log('found: ', item.shopName)
+                                                return item
+                                            } else {
+                                                return ''
+                                            }
+                                        })
 
-                                setShopAdd(temp[0].shopAddress)
-                                
-                            }}
-                            clearVal = {() => setShop('')} 
-                            data={shops.map((item) => {
-                                return { label: item.shopName, value: item.shopName }
-                            })}/>
+                                        setShopAdd(temp[0].shopAddress)
+                                        
+                                    }}
+                                    clearVal = {() => setShop('')} 
+                                    data={shops.map((item) => {
+                                        return { label: item.shopName, value: item.shopName }
+                                    })}/>
 
-                            <Text style={[STYLES.textNormal, {paddingTop: 5}]}>Shop not on the list ? Add the name & address below.</Text>
+                                    <Text style={[STYLES.textNormal, {paddingTop: 5}]}>Shop not on the list ? Add the name & address below.</Text>
 
-                            <MyTextArea 
-                                label='Shop Name'
-                                value={shop}
-                                onChangeFunction={(shop) => setShop(shop)}
-                                placeholder="Shop name"
-                            />
-                            
-                            <MyTextArea
-                                placeholder='Shop address here'
-                                label='Shop Address'
-                                type='add'
-                                value={shopAdd}
-                                onChangeFunction={(shopAdd) => setShopAdd(shopAdd)}
-                            />
+                                    <MyInput
+                                        label='Shop Name'
+                                        value={shop}
+                                        onChangeFunction={(shop) => setShop(shop)}
+                                        placeholder="Shop name"
+                                    />
+                                    
+                                    <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%'}}>
+                                        <Button icon={() => <MaterialIcons name="touch-app" size={20} color={COLORS.button} />} contentStyle={{flexDirection: 'row-reverse'}} mode="text" style={{borderRadius: 0, marginVertical: 5, backgroundColor: 'transparent',  alignItems: 'flex-start',}} onPress={() => {
+                                                setCordType("Pick up");
+                                                setViewMap(!viewMap);
+                                                setVisible(!visible);
+                                            }}>
+                                            Open Map
+                                        </Button>
+                                    </View>
+                                    <MyTextArea
+                                        placeholder='Shop address here'
+                                        disabled={true}
+                                        label='Shop Address'
+                                        type='add'
+                                        value={shopAdd}
+                                        onChangeFunction={(shopAdd) => {
+                                            setShopAdd(shopAdd);
+                                            calculateDisTime(pickUpCords, delCords);
+                                        }}
+                                    />
+                                </>
+                            )}
 
-                            <View style={{backgroundColor: COLORS.backdrop, width: '100%', paddingHorizontal: 20, paddingVertical: 10, marginBottom: 10}}>
+                            <View style={{backgroundColor: COLORS.onSurfaceVariant, width: '100%', paddingHorizontal: 20, paddingVertical: 10, marginBottom: 10}}>
                                 <Text style={{color: COLORS.background}}>Add Destination Location</Text>
                             </View>
                             <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%'}}>
                             <Button icon={() => <MaterialIcons name="touch-app" size={20} color={COLORS.button} />} contentStyle={{flexDirection: 'row-reverse'}} mode="text" style={{borderRadius: 0, marginVertical: 5, backgroundColor: 'transparent',  alignItems: 'flex-start',}} onPress={() => {
                                     setCordType("Delivery");
+                                    setDelCords({})
                                     setViewMap(!viewMap);
                                     setVisible(!visible);
                                 }}>
@@ -622,7 +785,8 @@ const DeliveryType = ({ route, navigation }) => {
                             </Button>
                             <Text style={{fontSize: 15, color: COLORS.outline}}>Or use</Text>
                             <Button icon={() => <MaterialIcons name="touch-app" size={20} color={COLORS.button} />} contentStyle={{flexDirection: 'row-reverse'}} mode="text" style={{borderRadius: 0, marginVertical: 5, backgroundColor: 'transparent', alignItems: 'flex-start',}} onPress={() => {
-                                    setCordType("Delivery");
+                                setCordType("Delivery");
+                                setDelCords({})
                                     setViewAds(!viewAdds);
                                     setVisible(!visible);
                                 }}>
@@ -636,7 +800,10 @@ const DeliveryType = ({ route, navigation }) => {
                                 disabled = {true}
                                 type='add'
                                 value={delLoc}
-                                onChangeFunction={(delLoc) => setdelLoc(delLoc)}
+                                onChangeFunction={(delLoc) => {
+                                    setdelLoc(delLoc)
+                                    calculateDisTime(pickUpCords, delCords);
+                                }}
                             />
                             <MyInput
                                 placeholder='Apartment/House/Room Number'
@@ -646,7 +813,7 @@ const DeliveryType = ({ route, navigation }) => {
                                 onChangeFunction={(delRoomNo) => setdelRoomNo(delRoomNo)}
                             />
 
-                            <View style={{backgroundColor: COLORS.backdrop, width: '100%', paddingHorizontal: 20, paddingVertical: 10, marginBottom: 10}}>
+                            <View style={{backgroundColor: COLORS.onSurfaceVariant, width: '100%', paddingHorizontal: 20, paddingVertical: 10, marginBottom: 10}}>
                                 <Text style={{color: COLORS.background}}>Add Destination Contatcs</Text>
                             </View>
                             <MyInput
@@ -669,9 +836,18 @@ const DeliveryType = ({ route, navigation }) => {
                                 value={addInstr}
                                 onChangeFunction={(addInstr) => setAddInstr(addInstr)}
                             />
-                            <View style={{alignItems: 'center'}}>
-                          
-                        </View>
+
+                             <View style={{backgroundColor: COLORS.onSurfaceVariant, width: '100%', paddingHorizontal: 20, paddingVertical: 10, marginBottom: 10}}>
+                                <Text style={{color: COLORS.background}}>Options</Text>
+                            </View>
+                            <DropdownComponent
+                                isRequired={missingInputs}
+                                errorText="Proof of delivery is required"
+                                clearVal={() => setProofOfDel('')}
+                                value={proofOfDel} label='Proof Of Delivery' onChangeFunction={(proofOfDel) => { setProofOfDel(proofOfDel)}}
+                                data={[
+                                    { label: 'QR Code & ID Photo', value: 'QRCode & Photo' },
+                            ]} />
                         </View>
                     </ScrollView>
                 </View>
@@ -695,16 +871,18 @@ const DeliveryType = ({ route, navigation }) => {
                             <List.Section>
                                 <RadioButton.Group
                                     value={radioValue}
-                                    onValueChange={(radioValue) => setRadioValue(radioValue)}
+                                    onValueChange={(radioValue) => {
+                                        setRadioValue(radioValue)
+                                    }}
                                 >
                                 <TouchableOpacity style={{flexDirection: 'row',paddingVertical: 5, borderRadius: 5, marginVertical: 5, width: '100%', backgroundColor: COLORS.background}}>
                                     <View style={{backgroundColor: COLORS.button, padding: 8, borderRadius: 8}}>
-                                        <MaterialCommunityIcons name="cash-marker" size={35} color={COLORS.background} />
+                                        <MaterialCommunityIcons name="cash-marker" size={35} color={COLORS.onBackground} />
                                     </View>
                                     <View style={{flexDirection: 'row', justifyContent: 'space-between', width: '80%', alignItems: 'center'}}>
                                         <View  style={{paddingHorizontal: 10}}>
-                                            <Text  ellipsizeMode='tail' style={[STYLES.textNormal, {color: '#161F3D'}]}>Cash Upon Delivery</Text>
-                                            <Text style={[STYLES.textNormal, {fontFamily: 'DMSansBold', color: '#161F3D'}]}>USD$ 15.00</Text>
+                                            <Text  ellipsizeMode='tail' style={[STYLES.textNormal,]}>Cash Upon Delivery</Text>
+                                            <Text style={[STYLES.textNormal, {fontFamily: 'DMSansBold'}]}>USD$ {totPrice.toFixed(2)}</Text>
                                         </View>
                                         <RadioButton value='Cash On Delivery'/>
                                     </View>
@@ -712,50 +890,39 @@ const DeliveryType = ({ route, navigation }) => {
                                 
                                 <TouchableOpacity style={{flexDirection: 'row',paddingVertical: 5, borderRadius: 5, marginVertical: 5, width: '100%', backgroundColor: COLORS.background}}>
                                     <View style={{backgroundColor: COLORS.button, padding: 8, borderRadius: 8}}>
-                                        <MaterialCommunityIcons name="cash-marker" size={35} color={COLORS.background} />
+                                        <MaterialIcons name="paypal" size={35} color={COLORS.onBackground} />
                                     </View>
                                     <View style={{flexDirection: 'row', justifyContent: 'space-between', width: '80%', alignItems: 'center'}}>
                                         <View  style={{paddingHorizontal: 10}}>
-                                            <Text  ellipsizeMode='tail' style={[STYLES.textNormal, {color: '#161F3D'}]}>Paynow</Text>
-                                            <Text style={[STYLES.textNormal, {fontFamily: 'DMSansBold', color: '#161F3D'}]}>USD$ 15.00</Text>
+                                            <Text  ellipsizeMode='tail' style={[STYLES.textNormal]}>Paynow</Text>
+                                            <Text style={[STYLES.textNormal, {fontFamily: 'DMSansBold'}]}>USD$ {totPrice.toFixed(2)}</Text>
                                         </View>
                                         <RadioButton value='PayNow'/>
                                     </View>
                                 </TouchableOpacity>
                                 </RadioButton.Group>
-                            </List.Section>
-                            
-                                            
+                            </List.Section>    
+                            {radioValue === "PayNow" && (
+                                <View>
+                                    <Text style={STYLES.textNormal}>If you choose Pay Now method, you'll be redirected to an online payment portal, your delivery order won't be placed untill you complete the online payment.</Text>
+                                </View>
+                            )}   
                         </ScrollView>
-                        {isLoading ? (
-                        <View style={{alignItems: "center"}}>
-                            <ActivityIndicator animating={true} color={COLORS.button} />
-                        </View>
-                        ) : (
-                        <></>
-                    )}
                 </View>
             ) : (
-                <View style={[STYLES.modalInner, {paddingVertical: 60}]}>
-                    <ScrollView>
-                        <View style={{alignItems: 'center'}}>
-                            <View style={[{backgroundColor:'#2ac780', borderRadius:100}]}> 
-                                <MaterialCommunityIcons name="check" size={200} color={COLORS.background} style={{borderRadius: 100}}/>
-                            </View>      
-                            <Text style={[STYLES.textHeading, {fontSize: 45, color: COLORS.outline}]}>Success!</Text>
-                            <Text style={[STYLES.textNormal, {textAlign: 'center', marginBottom: 20}]}>Your {deliveryCat} order has been placed successfully, deliveries take 30+ minutes depending on location, keep tracking your order status.</Text>
-                        </View>               
-                    </ScrollView>
-                    <View style={{alignItems: 'center'}}>
-                        <CustomButton text='Done' onPress={() => {
-                            setVisible(!visible)
-                            setModalNo(1);
-                            navigate('Deliveries');
-                        }}/>
-                    </View>
-                </View>
+            <View style={{alignItems: 'center', justifyContent: 'center',height: '80%'}}>
+                <View style={{alignItems: 'center', justifyContent: 'center'}}>
+                    <View style={[{backgroundColor:'#2ac780', borderRadius:100}]}> 
+                        <MaterialCommunityIcons name="check" size={200} color={COLORS.background} style={{borderRadius: 100}}/>
+                    </View>      
+                    <Text style={[STYLES.textHeading, {fontSize: 45, color: COLORS.outline}]}>Success!</Text>
+                    <Text style={[STYLES.textNormal, {textAlign: 'center', marginBottom: 20}]}>Your {deliveryCat} order has been placed successfully, deliveries take 30+ minutes depending on location, keep tracking your order status.</Text>
+                </View>               
+            </View>
             )
         }
+      <Toast />
+
     </View>
   )
 }
@@ -782,4 +949,15 @@ const styles = StyleSheet.create({
         height: 48,
         width: 48
       },
+      shadow: {
+        shadow: {
+          shadowOffset: {
+            width: 0,
+            height: 10,
+          },
+          shadowOpacity: 0.25,
+          shadowRadius: 3.5,
+          elevation: 5,
+        }
+      }
 })

@@ -25,73 +25,73 @@ import myTheme from '../utils/theme';
     };
 
     return (
-      <View style={STYLES.inputWrapper}>
-        {renderLabel()}
-        {isRequired && !value ? (
-          <>
-            <Dropdown
-              style={[STYLES.inputFieldError, {paddingBottom: 30}]}
-              containerStyle={{backgroundColor: COLORS.onTertiary}}
-              itemTextStyle={{color: COLORS.outline}}
-              placeholderStyle={styles.placeholderStyle}
-              selectedTextStyle={styles.selectedTextStyle}
-              inputSearchStyle={styles.inputSearchStyle}
-              iconStyle={styles.iconStyle}
-              data={data}
-              search
-              maxHeight={300}
-              labelField="label"
-              valueField="value"
-              placeholder={'Select ' + label}
-              searchPlaceholder="Search..."
-              value={value}
-              onFocus={() => setIsFocus(true)}
-              onBlur={() => setIsFocus(false)}
-              onChange={(item) => {onChangeFunction(item.value), setIsFocus(false)}}
-            />
-            <Button mode='outlined'>
-              Clear
-            </Button>
-            <HelperText type="error" padding="none" visible={true}>
-              {errorText}
-            </HelperText>
-          </>
+        isRequired && !value ? (
+        <View style={[STYLES.inputWrapper, {borderWidth: 1, borderColor: COLORS.error}]}>
+          {renderLabel()}
+            <>
+              <Dropdown
+                style={[{paddingBottom: 30,}]}
+                containerStyle={{backgroundColor: COLORS.onTertiary}}
+                itemTextStyle={{color: COLORS.outline}}
+                placeholderStyle={styles.placeholderStyle}
+                selectedTextStyle={styles.selectedTextStyle}
+                inputSearchStyle={styles.inputSearchStyle}
+                iconStyle={styles.iconStyle}
+                data={data}
+                search
+                maxHeight={300}
+                labelField="label"
+                valueField="value"
+                placeholder={'Select ' + label}
+                searchPlaceholder="Search..."
+                value={value}
+                onFocus={() => setIsFocus(true)}
+                onBlur={() => setIsFocus(false)}
+                onChange={(item) => {onChangeFunction(item.value), setIsFocus(false)}}
+              />
+                <HelperText type="error" padding="none" visible={true}>
+                {errorText}
+              </HelperText>
+            </>
+        </View>
         ):(
-          <>
-          <Dropdown
-            style={[STYLES.inputField, {paddingBottom: 10}]}
-            containerStyle={{backgroundColor: COLORS.onTertiary}}
-            itemTextStyle={{color: COLORS.outline}}
-            placeholderStyle={styles.placeholderStyle}
-            selectedTextStyle={styles.selectedTextStyle}
-            inputSearchStyle={styles.inputSearchStyle}
-            iconStyle={styles.iconStyle}
-            data={data}
-            search
-            maxHeight={300}
-            labelField="label"
-            valueField="value"
-            placeholder={'Select ' + label}
-            searchPlaceholder="Search..."
-            value={value}
-            onFocus={() => setIsFocus(true)}
-            onBlur={() => setIsFocus(false)}
-            onChange={(item) => {onChangeFunction(item.value), setIsFocus(false)}}
-          />
-          {value ? (
-            <TouchableOpacity onPress={clearVal}>
-              <Button mode='text' contentStyle={{alignItems: 'flex-start'}} style={{alignItems: 'flex-start'}}>
-                Clear
-            </Button>
-            </TouchableOpacity>
-          ):(
-            <></>
-          )}
-        </>
+        <View style={STYLES.inputWrapper}>
+        <>
+        <Dropdown
+          style={[{paddingBottom: 10}]}
+          containerStyle={{backgroundColor: COLORS.onTertiary}}
+          itemTextStyle={{color: COLORS.outline}}
+          placeholderStyle={styles.placeholderStyle}
+          selectedTextStyle={styles.selectedTextStyle}
+          inputSearchStyle={styles.inputSearchStyle}
+          iconStyle={styles.iconStyle}
+          data={data}
+          search
+          maxHeight={300}
+          labelField="label"
+          valueField="value"
+          placeholder={'Select ' + label}
+          searchPlaceholder="Search..."
+          value={value}
+          onFocus={() => setIsFocus(true)}
+          onBlur={() => setIsFocus(false)}
+          onChange={(item) => {onChangeFunction(item.value), setIsFocus(false)}}
+        />
+        {value ? (
+          <TouchableOpacity onPress={clearVal}>
+            <Button mode='text' contentStyle={{alignItems: 'flex-start'}} style={{alignItems: 'flex-start'}}>
+              Clear
+          </Button>
+          </TouchableOpacity>
+        ):(
+          <></>
         )}
-        <Divider />
-      </View>
-    );
+      </>
+      {/* )} */}
+      <Divider />
+        </View>
+      )
+    )
   };
 
   export default DropdownComponent;

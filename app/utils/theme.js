@@ -31,8 +31,15 @@ const useStyles = COLORS => (StyleSheet.create({
         height: 200,
         top: - 50,
         zIndex: 1000,
+        // position: 'absolute',
+        opacity: 0.8
+      },
+      upperCorner2: {
+        width: 500,
+        height: 200,
+        top: - 50,
+        zIndex: 1000,
         position: 'absolute',
-        backgroundColor: '#ffff',
         opacity: 0.8
       },
       lowerCorner: {
@@ -44,7 +51,8 @@ const useStyles = COLORS => (StyleSheet.create({
       loginImage: {
         width: screenWidth - 275,
         height: screenHeight - 675,
-        top: 20
+        top: 20,
+        backgroundColor: 'transparent'
       },
       loginImage2: {
         width: screenWidth - 230,
@@ -60,7 +68,6 @@ const useStyles = COLORS => (StyleSheet.create({
         resizeMode: 'cover',
         width: '100%',
         height: 200,
-        borderRadius: 5,
         marginHorizontal: 10
       },
       homeCardImage: {
@@ -70,8 +77,14 @@ const useStyles = COLORS => (StyleSheet.create({
         marginRight: 5
       },
       homeCardImage2: {
-        width: 50,
-        height: 50,
+        width: 60,
+        height: 60,
+        borderRadius: 5,
+        marginRight: 5
+      },
+      homeCardImageLarge: {
+        width: 60,
+        height: 60,
         borderRadius: 5,
         marginRight: 5
       },
@@ -95,11 +108,11 @@ const useStyles = COLORS => (StyleSheet.create({
       textHeading: {
         fontSize: 20,
         fontFamily: 'DMSansSemiBold',
-        color: '#161F3D',
+        color: COLORS.tertiary,
         paddingVertical: 8
       },
       shadowCard: {
-        backgroundColor: '#fff',
+        backgroundColor: COLORS.background,
         shadowColor: COLORS.outline,
         shadowOffset: {
           width: 0,
@@ -140,7 +153,7 @@ const useStyles = COLORS => (StyleSheet.create({
       },
       modalInner: {
         // width: screenWidth -20,
-        backgroundColor: '#fff',
+        backgroundColor: COLORS.background,
         borderRadius: 5,
         height: '100%',
         justifyContent: 'flex-start'

@@ -30,8 +30,8 @@ const PaymentMethod = ({ navigation }) => {
                         <View style={[{backgroundColor:'#2ac780',borderRadius:60}]}> 
                          <MaterialCommunityIcons name="check" size={130} color={COLORS.background} style={{borderRadius: 100}}/>
                         </View>
-                        <Text style={[STYLES.textHeading,{color:COLORS.backdrop},{fontSize:30},{fontWeight:'bold'}]}>Success!</Text>
-                        <Text   style={[STYLES.textNormal,{color:COLORS.backdrop,fontWeight:'bold'}]}>Your Order Has been successfully placed. Please keep tracking it's progress.</Text>
+                        <Text style={[STYLES.textHeading,{color:COLORS.onSurfaceVariant},{fontSize:30},{fontWeight:'bold'}]}>Success!</Text>
+                        <Text   style={[STYLES.textNormal,{color:COLORS.onSurfaceVariant,fontWeight:'bold'}]}>Your Order Has been successfully placed. Please keep tracking it's progress.</Text>
                         <View style={{alignItems:'center',justifyContent:'center',marginVertical:15}}>
                           <CustomButton text='Done' onPress={() => toggleModal()}/>
                         </View>

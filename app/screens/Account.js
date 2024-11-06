@@ -233,11 +233,15 @@ const Account = ({ navigation }) => {
       }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {backgroundColor: COLORS.surface}]}>
+      <Header
+          title='My Account'
+          titleColor={COLORS.outline}
+      />
         <Portal>
             <Modal visible={visible} onDismiss={() => setVisible(!visible)} contentContainerStyle={[STYLES.modalContainer, {height: screenHeight - 300}]}>
                 <View style={STYLES.modalInner}>
-                    <Text style={STYLES.textHeading}>Edit your delivery address</Text>
+                    <Text style={STYLES.textHeading}>Edit your account details</Text>
                     <ScrollView>
                     <View>
                         <View style={STYLES.labelWrapper}>
@@ -247,7 +251,6 @@ const Account = ({ navigation }) => {
                         onPress={pickImage}
                         style={{
                             padding: 5,
-                            backgroundColor: "#fff",
                             width: screenWidth - 80,
                             marginBottom: 15,
                             flexDirection: "row",
@@ -310,12 +313,12 @@ const Account = ({ navigation }) => {
                             <ActivityIndicator animating={true} color={COLORS.button} />
                             </Button>
                         ):(
-                           <>
-                             <CustomButton text='Update Changes' onPress={() => {
-                                handleClick()
-                                toggleModal()
-                            }}/>
-                           </>
+                            <Button mode="contained" style={{borderRadius: 0, paddingVertical: 5, marginVertical: 5, backgroundColor: COLORS.button}} onPress={() => {
+                              handleClick()
+                              toggleModal()
+                            }}>
+                            Update Changes
+                            </Button>
                         )}
                        
                     </ScrollView>
@@ -323,7 +326,7 @@ const Account = ({ navigation }) => {
             </Modal>
 
             {/* Password reset modal */}
-            <Modal visible={passVisible} onDismiss={() => setPassVisible(!passVisible)} contentContainerStyle={[STYLES.modalContainer, {height: screenHeight - 300}]}>
+            <Modal visible={passVisible} onDismiss={() => setPassVisible(!passVisible)} contentContainerStyle={[STYLES.modalContainer, {height: 200}]}>
                 <View style={STYLES.modalInner}>
                     <ScrollView>
                     <View>
@@ -355,7 +358,9 @@ const Account = ({ navigation }) => {
                         <ActivityIndicator animating={true} color={COLORS.button} />
                         </Button>
                     ):(
-                        <CustomButton text="Send" onPress={() => handleForgot()} />
+                        <Button mode="contained" style={{borderRadius: 0, paddingVertical: 5, marginVertical: 5, backgroundColor: COLORS.button, marginTop: 10}} onPress={() => handleForgot()} >
+                          Send
+                        </Button>
                     )}
 
                     </View>
@@ -374,7 +379,6 @@ const Account = ({ navigation }) => {
                 </Dialog.Actions>
             </Dialog>
         </Portal>
-        <Header title='My Account' backPress={() => navigation.goBack()} menuPress={() => navigation.toggleDrawer()}/>
 
         <ScrollView>
             <View style={{alignItems: 'center'}}>

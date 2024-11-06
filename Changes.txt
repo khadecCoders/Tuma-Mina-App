@@ -1,0 +1,3 @@
+#Installed a react-native-modals dependency
+#Installed expo-lining dependency
+#Added the contacts page

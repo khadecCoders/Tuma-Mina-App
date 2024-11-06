@@ -106,10 +106,10 @@ const Signin = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {backgroundColor: COLORS.surface}]}>
       <Image
         source={require("../assets/upperCorner.png")}
-        style={STYLES.upperCorner}
+        style={STYLES.upperCorner2}
       />
 
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -136,6 +136,7 @@ const Signin = () => {
             Provide your login details and sign in
           </Text>
 
+          <View style={{width: screenWidth - 50}}>
           <MyInput 
             isRequired={missingInputs}
             errorText="Email address is required"
@@ -156,13 +157,16 @@ const Signin = () => {
                 setPassword(password)
               }} 
           />
+          </View>
 
           {isLoading ? (
-            <Button mode="contained" style={{borderRadius: 0, width: screenWidth - 50, paddingVertical: 5, marginVertical: 5, backgroundColor: COLORS.background}}>
+            <Button mode="contained" style={{borderRadius: 0, width: screenWidth - 50, paddingVertical: 5, marginVertical: 20, backgroundColor: COLORS.background}}>
               <ActivityIndicator animating={true} color={COLORS.button} />
             </Button>
           ):(
-            <CustomButton text="Sign In" onPress={() => loginUser()} />
+            <Button mode="contained" style={{borderRadius: 0, paddingVertical: 5, marginVertical: 20, backgroundColor: COLORS.button,  width: screenWidth - 50,}} onPress={() => loginUser()}>
+              Sign In
+            </Button>
           )}
           <TouchableOpacity onPress={() => navigate("ForgotPassword")}>
             <Text
@@ -222,7 +226,6 @@ export default Signin;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
   },

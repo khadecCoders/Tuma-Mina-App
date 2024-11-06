@@ -1,10 +1,6 @@
 import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import React from 'react'
 import myTheme from '../utils/theme';
-import {
-    MaterialIcons,
-    AntDesign
-  } from "@expo/vector-icons";
 import { Card, Surface } from 'react-native-paper';
 
 const Header = ({title, leftView, rightView, titleColor}) => {
